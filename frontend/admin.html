@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Vid Voyage World</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Cpath d='M6 22 L12 14 L18 18 L26 8' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M22 8 L26 8 L26 12' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <style>
+        /* Specific page styles inside admin.html */
+        .header-actions { display: flex; gap: 16px; align-items: center; }
+        .admin-profile { display: flex; align-items: center; gap: 12px; }
+        .admin-avatar { width: 32px; height: 32px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="mobile-overlay" id="mobile-overlay"></div>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            Vid Voyage <span class="badge badge-admin" style="margin-left: 8px;">ADMIN</span>
+        </div>
+        <nav class="admin-nav" id="admin-nav">
+            <a class="admin-nav-item active" data-target="overview">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Overview
+            </a>
+            <a class="admin-nav-item" data-target="users">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                User Management
+            </a>
+            <a class="admin-nav-item" data-target="trends">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Trend Monitoring
+            </a>
+            <a class="admin-nav-item" data-target="activity">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Activity Feed
+            </a>
+            <a class="admin-nav-item" data-target="settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                System Settings
+            </a>
+            
+            <div style="flex:1"></div>
+            <a href="index.html" class="admin-nav-item">← Back to App</a>
+            <button id="logout-btn" class="btn btn-danger" style="margin-top: 16px; width: 100%;">Logout Admin</button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="mobile-menu-btn" class="mobile-menu-btn" style="background:none; border:none; color:white; cursor:pointer; padding:4px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <h2 id="page-title" style="margin: 0; font-family: 'Space Grotesk', sans-serif;">Overview</h2>
+            </div>
+            <div class="header-actions">
+                <span id="live-clock" style="color: #a1a1aa; font-size: 13px; font-variant-numeric: tabular-nums;"></span>
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="admin-initial">A</div>
+                    <span id="admin-name" style="font-size: 14px; font-weight: 600;">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-content" id="main-content">
+            <!-- ─── OVERVIEW TAB ─── -->
+            <div class="tab-content active" id="tab-overview">
+                <div class="overview-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Total Users</div>
+                        <div class="stat-value" id="stat-total-users">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Active Users (7d)</div>
+                        <div class="stat-value" id="stat-active-users">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Total Trends</div>
+                        <div class="stat-value" id="stat-total-trends">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">API Requests Today</div>
+                        <div class="stat-value" id="stat-api-requests">--</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 style="margin-top:0;">Traffic & Signups (7 Days)</h3>
+                        <div class="chart-container">
+                            <canvas id="trafficChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 style="margin-top:0;">Category Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── USERS TAB ─── -->
+            <div class="tab-content" id="tab-users">
+                <div class="admin-table-container">
+                    <div style="padding: 16px 24px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border);">
+                        <input type="text" id="user-search" class="form-input" style="max-width: 300px; padding: 8px 12px;" placeholder="Search users by email...">
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr>
+                                <td colspan="6" style="padding: 24px;">
+                                    <div class="skeleton" style="height: 24px; width: 100%; margin-bottom: 12px;"></div>
+                                    <div class="skeleton" style="height: 24px; width: 100%; margin-bottom: 12px;"></div>
+                                    <div class="skeleton" style="height: 24px; width: 100%;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ─── TRENDS TAB ─── -->
+            <div class="tab-content" id="tab-trends">
+                <div class="charts-grid">
+                    <div class="admin-table-container">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid var(--card-border);">
+                            <h3 style="margin:0;">Fastest Growing Trends</h3>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Video</th>
+                                    <th>Views</th>
+                                    <th>Growth Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fast-trends-tbody">
+                                <tr>
+                                    <td colspan="3" style="padding: 24px;">
+                                        <div style="display: flex; gap: 12px;">
+                                            <div class="skeleton" style="width: 120px; height: 68px; border-radius: 8px;"></div>
+                                            <div style="flex: 1;">
+                                                <div class="skeleton" style="height: 20px; width: 80%; margin-bottom: 8px;"></div>
+                                                <div class="skeleton" style="height: 16px; width: 40%;"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="admin-table-container">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid var(--card-border);">
+                            <h3 style="margin:0; color: #fb7185;">Suspicious Content</h3>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Video</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suspicious-tbody">
+                                <tr>
+                                    <td colspan="2" style="padding: 24px;">
+                                        <div style="display: flex; gap: 12px;">
+                                            <div class="skeleton" style="width: 120px; height: 68px; border-radius: 8px;"></div>
+                                            <div style="flex: 1;">
+                                                <div class="skeleton" style="height: 20px; width: 80%; margin-bottom: 8px;"></div>
+                                                <div class="skeleton" style="height: 16px; width: 40%;"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── ACTIVITY FEED TAB ─── -->
+            <div class="tab-content" id="tab-activity">
+                <div class="admin-table-container" style="max-width: 800px; margin: 0 auto;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between;">
+                        <h3 style="margin:0;">Realtime System Logs</h3>
+                        <span class="badge badge-high" style="display:flex; align-items:center; gap:6px;"><span style="width:8px;height:8px;background:currentColor;border-radius:50%;animation:pulse 2s infinite;"></span> LIVE</span>
+                    </div>
+                    <div id="activity-feed-container">
+                        <div style="padding: 32px; text-align: center; color: #a1a1aa;">Loading activity feed...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── SETTINGS TAB ─── -->
+            <div class="tab-content" id="tab-settings">
+                <div class="admin-table-container" style="max-width: 600px; padding: 24px;">
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label class="form-label">Maintenance Mode</label>
+                            <select id="set-maintenance" class="form-input">
+                                <option value="false">Off (System Active)</option>
+                                <option value="true">On (System Offline)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Allow New Signups</label>
+                            <select id="set-signups" class="form-input">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Retention (Days)</label>
+                            <input type="number" id="set-retention" class="form-input" min="1" max="365">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Main Admin JS -->
+<script src="js/admin.js"></script>
+
+</body>
+</html>

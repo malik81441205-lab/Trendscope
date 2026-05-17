@@ -1,0 +1,368 @@
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE-SPECIFIC OVERRIDES — Vid Voyage World
+   This file ONLY applies at ≤768px. Desktop styles are untouched.
+   ═══════════════════════════════════════════════════════════════ */
+
+@media screen and (max-width: 768px) {
+
+    /* ─── NUCLEAR OVERFLOW PREVENTION ─── */
+    html {
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+    body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        flex-direction: column;
+    }
+
+    /* Force EVERY element to not exceed viewport */
+    *, *::before, *::after {
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+    /* Undo for positioned elements that need it */
+    .sidebar-nav, .sidebar-nav *, .bottom-nav *, .topbar * {
+        max-width: none !important;
+    }
+
+    /* ─── SIDEBAR HIDDEN ON MOBILE ─── */
+    .sidebar-nav {
+        transform: translateX(-100%) !important;
+        width: 260px !important;
+        max-width: 260px !important;
+        z-index: 300;
+    }
+    .sidebar-nav.open {
+        transform: translateX(0) !important;
+    }
+
+    /* ─── MAIN CONTENT FULL WIDTH ─── */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        min-width: 0 !important;
+    }
+
+    /* ─── TOPBAR MOBILE ─── */
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px !important;
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        width: 100% !important;
+    }
+    .topbar-left {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .topbar-right {
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+    }
+    .search-bar-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        order: -1;
+    }
+    .audience-filters {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .icon-btn { width: 36px; height: 36px; }
+    .icon-btn svg { width: 16px; height: 16px; }
+
+    /* ─── SIDEBAR TOGGLE VISIBLE ─── */
+    .sidebar-toggle { display: flex !important; }
+    .sidebar-overlay.active { display: block; }
+
+    /* ─── BOTTOM NAV VISIBLE ─── */
+    .bottom-nav { display: flex !important; }
+    .b-nav-item { font-size: 10px; padding: 6px 4px; }
+    .b-nav-item svg { width: 18px; height: 18px; }
+
+    /* ─── PAGE BODY ─── */
+    .page-body {
+        padding: 12px 10px 80px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        gap: 16px !important;
+    }
+
+    /* ─── HERO WIDGETS ─── */
+    .hero-widgets-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+    .side-widgets-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* ─── PANEL CARDS (Contains charts!) ─── */
+    .panel-card {
+        padding: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+    .panel-title { font-size: 14px; }
+    .panel-sub { font-size: 11px; }
+
+    /* ─── CANVAS / CHART FIX (Critical!) ─── */
+    canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    .chart-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        height: 180px !important;
+        position: relative !important;
+    }
+
+    /* ─── STATS GRID ─── */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    .stat-card {
+        padding: 12px !important;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+    .stat-value { font-size: 18px !important; }
+    .stat-label { font-size: 10px; }
+    .stat-icon-wrap { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 8px; }
+    .stat-icon-wrap svg { width: 14px; height: 14px; }
+    .stat-pct { font-size: 10px; padding: 2px 6px; top: 10px; right: 10px; }
+
+    /* ─── REGION SECTION ─── */
+    .section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px;
+        width: 100% !important;
+    }
+    .section-title { font-size: 15px !important; }
+    .section-title svg { width: 16px; height: 16px; }
+    .country-scroll { gap: 6px; width: 100% !important; }
+    .country-btn { padding: 8px 10px; font-size: 11px; border-radius: 8px; gap: 6px; }
+    .map-container { height: 180px; width: 100% !important; }
+
+    /* ─── CONTENT GRID ─── */
+    .content-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* ─── VIDEO GRID ─── */
+    .video-grid-inner {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .video-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .category-scroll { gap: 4px; }
+    .cat-btn { padding: 5px 10px; font-size: 11px; }
+
+    /* ─── VIDEO CARDS ─── */
+    .video-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    .video-thumbnail-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .video-thumbnail {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .video-title {
+        font-size: 13px;
+        word-break: break-word;
+        -webkit-line-clamp: 2;
+    }
+    .video-info {
+        padding: 12px;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+    .channel-row { gap: 8px; overflow: hidden !important; }
+    .vid-ch-avatar { width: 28px; height: 28px; font-size: 12px; }
+    .channel-name { font-size: 12px; }
+    .upload-time { font-size: 10px; }
+    .subscribe-btn { font-size: 9px; padding: 3px 8px; }
+    .video-smart-stats {
+        gap: 6px !important;
+        grid-template-columns: 1fr 1fr !important;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+    .ss-val { font-size: 11px !important; }
+    .ss-label { font-size: 9px !important; }
+    .viral-prob { font-size: 9px; padding: 3px 6px; }
+    .smart-badge { font-size: 8px; padding: 2px 6px; }
+    .video-duration { font-size: 10px; }
+    .bookmark-btn { width: 28px; height: 28px; border-radius: 6px; }
+    .bookmark-btn svg { width: 13px; height: 13px; }
+
+    /* ─── COMPARISON CARDS ─── */
+    .comparison-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    .comparison-card {
+        padding: 12px !important;
+        overflow: hidden !important;
+    }
+    .comp-icon { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 6px; }
+    .comp-icon svg { width: 16px; height: 16px; }
+    .comp-label { font-size: 9px; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .comp-value { font-size: 18px !important; margin-bottom: 2px; }
+    .comp-delta { font-size: 9px; }
+    .comp-delta svg { width: 10px; height: 10px; }
+
+    /* ─── HISTORY SECTION & CHARTS ─── */
+    .history-section {
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+    .history-charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        width: 100% !important;
+    }
+    .chart-panel {
+        padding: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    .chart-panel canvas {
+        max-width: 100% !important;
+    }
+    .chart-panel .panel-title { font-size: 13px; }
+    .chart-panel .panel-sub { font-size: 10px; }
+
+    /* ─── TIME FILTER ─── */
+    .time-filter-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+        gap: 4px;
+        width: 100%;
+    }
+    .time-filter-bar::-webkit-scrollbar { display: none; }
+    .time-btn { padding: 6px 12px; font-size: 11px; flex-shrink: 0; }
+
+    /* ─── SAVED TRENDS ─── */
+    .saved-trends-grid { grid-template-columns: 1fr !important; }
+    .saved-trend-card { padding: 10px; gap: 10px; }
+    .saved-trend-thumb { width: 80px; min-width: 80px; height: 45px; border-radius: 6px; }
+    .saved-trend-title { font-size: 12px; }
+    .saved-trend-channel { font-size: 10px; }
+    .saved-trend-stats { font-size: 10px; }
+    .saved-trend-remove { width: 24px; height: 24px; }
+
+    /* ─── ACTIVITY FEED & CREATOR ─── */
+    .activity-feed { max-height: 120px; }
+    .activity-item { font-size: 12px; gap: 8px; }
+    .activity-icon { width: 24px; height: 24px; }
+    .activity-icon svg { width: 12px; height: 12px; }
+    .rising-creator { gap: 10px; }
+    .rc-avatar { width: 36px; height: 36px; font-size: 14px; }
+    .rc-name { font-size: 14px; }
+    .rc-stats { font-size: 12px; }
+
+    /* ─── TOP CHANNELS ─── */
+    .top-channels-scroll {
+        gap: 10px;
+        width: 100% !important;
+    }
+    .ch-card { min-width: 200px; padding: 14px; }
+
+    /* ─── KEYWORDS ─── */
+    .keywords-grid { gap: 6px; width: 100% !important; }
+
+    /* ─── GROWTH INSIGHTS ─── */
+    .growth-section { gap: 12px; }
+
+    /* ─── FAB BUTTON ─── */
+    .fab-bottom {
+        bottom: 76px !important;
+        right: 10px;
+        width: 36px; height: 36px;
+        max-width: 36px !important;
+    }
+    .fab-bottom svg { width: 16px; height: 16px; }
+
+    /* ─── FOOTER ─── */
+    .footer {
+        padding: 20px 12px 80px;
+        text-align: center;
+        width: 100% !important;
+    }
+    .footer-inner { flex-direction: column; gap: 12px; }
+
+    /* ─── PARTICLES HIDDEN ─── */
+    .particles-bg { display: none !important; }
+
+    /* ─── ABOUT GRID ─── */
+    .about-grid {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+    }
+}
+
+/* ═══ EXTRA SMALL (≤400px) ═══ */
+@media screen and (max-width: 400px) {
+    .page-body {
+        padding: 8px 6px 76px !important;
+        gap: 12px !important;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+    .comparison-grid {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+    .comp-value { font-size: 20px !important; }
+    .stat-value { font-size: 16px !important; }
+    .section-title { font-size: 13px !important; }
+    .video-title { font-size: 12px; }
+    .topbar { padding: 8px 6px !important; }
+    .search-bar-container { height: 36px; }
+    .search-bar-container input { font-size: 12px; }
+    .b-nav-item { font-size: 8px; }
+}

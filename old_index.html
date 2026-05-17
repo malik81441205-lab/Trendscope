@@ -1,0 +1,467 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendScope â€” YouTube Trends Dashboard</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Cpath d='M6 22 L12 14 L18 18 L26 8' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M22 8 L26 8 L26 12' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar-nav" id="sidebar">
+        <div class="sidebar-top">
+            <a href="index.html" class="sidebar-brand">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 32 32" fill="none">
+                        <path d="M6 22 L12 14 L18 18 L26 8" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 8 L26 8 L26 12" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">TrendScope</span>
+                    <span class="brand-sub">Analytics PRO</span>
+                </div>
+            </a>
+
+            <nav class="sidebar-menu">
+                <a href="#section-home" class="nav-item active" data-section="section-home" id="nav-home" title="Dashboard">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="#section-videos" class="nav-item" data-section="section-videos" id="nav-videos" title="Videos">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                    <span class="nav-label">Videos</span>
+                </a>
+                <a href="#section-channels" class="nav-item" data-section="section-channels" id="nav-channels" title="Channels">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                    <span class="nav-label">Channels</span>
+                </a>
+                <a href="#section-keywords" class="nav-item" data-section="section-keywords" id="nav-keywords" title="Keywords">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg></div>
+                    <span class="nav-label">Keywords</span>
+                </a>
+                <a href="#section-history" class="nav-item" data-section="section-history" id="nav-history" title="History">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <span class="nav-label">History</span>
+                </a>
+                <a href="#section-saved" class="nav-item" data-section="section-saved" id="nav-saved" title="Saved">
+                    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+                    <span class="nav-label">Saved</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="live-indicator" id="live-indicator">
+                <div style="display:flex;align-items:center;margin-bottom:4px;">
+                    <span class="live-dot"></span>
+                    <span class="live-text">REALTIME</span>
+                </div>
+                <span class="live-sub" id="pulse-text">Syncing data...</span>
+            </div>
+            <div class="auth-section">
+                <a href="login.html" class="auth-link" id="login-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                    <span>Login</span>
+                </a>
+                <span id="user-display" class="user-badge" style="display: none;"></span>
+            </div>
+        </div>
+    </aside>
+
+    <button class="sidebar-toggle" id="sidebar-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+    </button>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <canvas id="particles-bg" class="particles-bg"></canvas>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- TOPBAR -->
+        <header class="topbar" id="section-home">
+            <div class="topbar-left">
+                <span class="live-badge" id="topbar-live-badge"><span class="live-badge-dot"></span>LIVE</span>
+                <span class="market-name" id="market-name">Global Market</span>
+            </div>
+            
+            <div class="search-bar-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                <input type="text" id="search-input" placeholder="Search keyword, creator, category, or region...">
+            </div>
+
+            <div class="topbar-right">
+                <div class="audience-filters" id="audience-filters">
+                    <button class="audience-btn active" data-audience="all">All</button>
+                    <button class="audience-btn" data-audience="kids">Kids</button>
+                    <button class="audience-btn" data-audience="teens">Teens</button>
+                    <button class="audience-btn" data-audience="adults">Adults</button>
+                </div>
+                <button class="icon-btn" id="theme-toggle" title="Toggle Theme" aria-label="Toggle Theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="page-body">
+            
+            <!-- TOP HERO WIDGETS -->
+            <div class="hero-widgets-grid">
+                <!-- STATS GRID -->
+                <section class="stats-grid" id="stats-overview">
+                    <!-- Rendered by JS -->
+                </section>
+                
+                <div class="side-widgets-row">
+                    <div class="panel-card widget">
+                        <h3 class="panel-title">Top Rising Channel</h3>
+                        <div id="top-rising-channel" class="rising-creator">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                    <div class="panel-card widget feed-widget">
+                        <h3 class="panel-title">Live Activity Feed</h3>
+                        <div id="activity-feed" class="activity-feed">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REGION & MAP -->
+            <section class="region-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                        Region & Demographics
+                    </h2>
+                    <button class="view-all" id="toggle-map-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                        Show Map
+                    </button>
+                </div>
+                <div class="country-scroll" id="country-selector"></div>
+                <div class="map-container" id="map-container">
+                    <div id="leaflet-map"></div>
+                </div>
+            </section>
+
+            <!-- MAIN CONTENT GRID -->
+            <div class="content-grid" id="section-videos">
+                <div class="videos-column">
+                    <div class="video-section-header">
+                        <div class="category-scroll" id="category-filter"></div>
+                        <span id="video-count" class="video-count-badge">0 videos</span>
+                    </div>
+                    <div class="video-grid-inner" id="video-grid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <div class="right-panels">
+                    <div class="panel-card">
+                        <h3 class="panel-title">Category Distribution</h3>
+                        <p class="panel-sub">Share of trending topics</p>
+                        <div class="chart-container" style="height: 200px; position: relative; margin-top: 10px;">
+                            <canvas id="categoryChartCanvas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-card">
+                        <h3 class="panel-title">Engagement Metrics</h3>
+                        <p class="panel-sub">Likes vs Comments</p>
+                        <div class="chart-container" style="height: 180px; position: relative; margin-top: 10px;">
+                            <canvas id="engagementChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <section id="section-channels">
+                        <div class="panel-card" id="top-channels"></div>
+                    </section>
+                    
+                    <section id="section-keywords">
+                        <div class="panel-card" id="trending-keywords"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- TREND GRAPH MOVED BELOW VIDEOS -->
+            <div class="panel-card chart-hero-card" style="margin-top:20px;">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Realtime Trend Momentum</h3>
+                        <p class="panel-sub">Platform-wide viewership velocity over last 24h</p>
+                    </div>
+                    <span class="live-badge"><span class="live-badge-dot"></span>UPDATING</span>
+                </div>
+                <div class="chart-container" style="height: 180px; position: relative; margin-top: 10px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- â•â•â• HISTORICAL TRENDS SECTION â•â•â• -->
+            <section class="history-section" id="section-history">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Historical Trend Analytics
+                    </h2>
+                    <div class="time-filter-bar" id="time-filter-bar">
+                        <button class="time-btn active" data-days="1">Last 24 Hours</button>
+                        <button class="time-btn" data-days="3">Last 3 Days</button>
+                        <button class="time-btn" data-days="5">Last 5 Days</button>
+                        <button class="time-btn" data-days="7">Last 7 Days</button>
+                    </div>
+                </div>
+
+                <!-- Comparison Cards -->
+                <div class="comparison-grid" id="comparison-grid">
+                    <div class="comparison-card" id="comp-growth">
+                        <div class="comp-icon growth-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+                        <div class="comp-label">Growth Rate</div>
+                        <div class="comp-value" id="comp-growth-val">--</div>
+                        <div class="comp-delta" id="comp-growth-delta">vs previous day</div>
+                    </div>
+                    <div class="comparison-card" id="comp-ranking">
+                        <div class="comp-icon ranking-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+                        <div class="comp-label">Avg Ranking</div>
+                        <div class="comp-value" id="comp-ranking-val">--</div>
+                        <div class="comp-delta" id="comp-ranking-delta">position change</div>
+                    </div>
+                    <div class="comparison-card" id="comp-movement">
+                        <div class="comp-icon movement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg></div>
+                        <div class="comp-label">Trend Movement</div>
+                        <div class="comp-value" id="comp-movement-val">--</div>
+                        <div class="comp-delta" id="comp-movement-delta">momentum</div>
+                    </div>
+                    <div class="comparison-card" id="comp-engagement">
+                        <div class="comp-icon engage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+                        <div class="comp-label">Engagement</div>
+                        <div class="comp-value" id="comp-engagement-val">--</div>
+                        <div class="comp-delta" id="comp-engagement-delta">rate change</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Charts -->
+                <div class="history-charts-grid" id="history-charts-grid">
+                    <div class="panel-card chart-panel">
+                        <h3 class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg> Views Growth</h3>
+                        <p class="panel-sub">Total views over time</p>
+                        <div class="chart-container" style="height:220px;position:relative;margin-top:10px"><canvas id="viewsGrowthChart"></canvas></div>
+                    </div>
+                    <div class="panel-card chart-panel">
+                        <h3 class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> Viral Momentum</h3>
+                        <p class="panel-sub">Viral probability trend</p>
+                        <div class="chart-container" style="height:220px;position:relative;margin-top:10px"><canvas id="viralMomentumChart"></canvas></div>
+                    </div>
+                    <div class="panel-card chart-panel">
+                        <h3 class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> Engagement Timeline</h3>
+                        <p class="panel-sub">Likes vs Comments over time</p>
+                        <div class="chart-container" style="height:220px;position:relative;margin-top:10px"><canvas id="engagementTimelineChart"></canvas></div>
+                    </div>
+                    <div class="panel-card chart-panel">
+                        <h3 class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Region Popularity</h3>
+                        <p class="panel-sub">Views by region</p>
+                        <div class="chart-container" style="height:220px;position:relative;margin-top:10px"><canvas id="regionPopularityChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- â•â•â• SAVED TRENDS SECTION â•â•â• -->
+            <section class="saved-section" id="section-saved" style="display:none">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                        Saved Trends
+                    </h2>
+                    <span class="video-count-badge" id="saved-count">0 saved</span>
+                </div>
+                <div class="saved-trends-grid" id="saved-trends-grid">
+                    <div class="empty-state" style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text2);background:var(--bg2);border:1px dashed var(--border);border-radius:var(--radius)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;margin-bottom:16px;opacity:0.4"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                        <h3 style="color:var(--text);margin-bottom:8px">No saved trends yet</h3>
+                        <p>Click the bookmark icon on any video to save it here.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="growth-section" id="growth-insights"></section>
+
+        </div><!-- end page-body -->
+
+        <footer class="footer" id="about-us">
+            <!-- ABOUT US SECTION -->
+            <div class="about-section">
+                <div class="about-header">
+                    <h2>Empowering Creators with Realtime Data</h2>
+                    <p>TrendScope is the ultimate analytics platform designed to uncover viral momentum before it happens.</p>
+                </div>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                        <h4>Realtime Trend Analytics</h4>
+                        <p>We process thousands of data points per second to deliver live viewership velocity, engagement spikes, and trending search terms as they happen.</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>
+                        <h4>Global Support</h4>
+                        <p>Track metrics across 8+ global markets. Our dynamic engine adapts to regional demographics and calculates localized viral probability.</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                        <h4>Creator-Focused Mission</h4>
+                        <p>We believe in democratizing access to enterprise-grade analytics, giving independent creators the tools to compete with large studios.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                        <path d="M6 22 L12 14 L18 18 L26 8" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 8 L26 8 L26 12" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>TrendScope</span>
+                </div>
+                <p class="footer-text">Professional YouTube trend analytics across 8+ global markets</p>
+                <div class="footer-links">
+                    <a href="login.html">Login</a><span class="footer-dot">Â·</span>
+                    <a href="signup.html">Sign Up</a>
+                </div>
+                <p class="footer-copy">Â© 2026 TrendScope. Real-time data syncing active.</p>
+            </div>
+        </footer>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab-bottom" id="scroll-bottom-btn" title="Scroll to bottom" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+    </button>
+    
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <a href="#section-home" class="b-nav-item active" data-section="section-home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+        </a>
+        <a href="#section-videos" class="b-nav-item" data-section="section-videos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Videos
+        </a>
+        <a href="#section-channels" class="b-nav-item" data-section="section-channels">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Creators
+        </a>
+        <a href="#section-history" class="b-nav-item" data-section="section-history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
+        </a>
+        <a href="#section-saved" class="b-nav-item" data-section="section-saved">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            Saved
+        </a>
+    </nav>
+
+    <!-- â•â•â• AUTH GATE MODAL â•â•â• -->
+    <div class="auth-gate-overlay" id="auth-gate-overlay">
+        <div class="auth-gate-modal" id="auth-gate-modal">
+            <button class="ag-close" id="ag-close-btn" title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+
+            <div class="ag-header">
+                <div class="ag-lock-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h2 class="ag-title">Premium Analytics Access</h2>
+                <p class="ag-subtitle">Please sign up or log in to access trend analytics.</p>
+            </div>
+
+            <div class="ag-tabs">
+                <button class="ag-tab-btn active" data-tab="login">Sign In</button>
+                <button class="ag-tab-btn" data-tab="signup">Sign Up</button>
+            </div>
+
+            <!-- LOGIN PANEL -->
+            <div class="ag-form-panel active" id="ag-login-panel">
+                <div class="ag-error" id="ag-login-error"></div>
+                <div class="ag-success" id="ag-login-success"></div>
+                <form id="ag-login-form" autocomplete="on">
+                    <div class="ag-field">
+                        <label class="ag-label">Email Address</label>
+                        <input type="email" class="ag-input" id="ag-login-email" placeholder="name@example.com" required autocomplete="email">
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-label">Password</label>
+                        <input type="password" class="ag-input" id="ag-login-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required autocomplete="current-password">
+                    </div>
+                    <div class="ag-field ag-recaptcha-field">
+                        <label class="ag-label">Security Verification</label>
+                        <div id="ag-recaptcha-login" class="ag-recaptcha-widget"></div>
+                    </div>
+                    <div class="ag-row">
+                        <label class="ag-remember"><input type="checkbox" id="ag-remember-me"><span>Remember me</span></label>
+                        <a href="#" class="ag-forgot" id="ag-forgot-pw">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="ag-submit" id="ag-login-btn">Secure Sign In</button>
+                </form>
+            </div>
+
+            <!-- SIGNUP PANEL -->
+            <div class="ag-form-panel" id="ag-signup-panel">
+                <div class="ag-error" id="ag-signup-error"></div>
+                <div class="ag-success" id="ag-signup-success"></div>
+                <form id="ag-signup-form" autocomplete="on">
+                    <div class="ag-field">
+                        <label class="ag-label">Full Name</label>
+                        <input type="text" class="ag-input" id="ag-signup-name" placeholder="John Doe" required autocomplete="name">
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-label">Email Address</label>
+                        <input type="email" class="ag-input" id="ag-signup-email" placeholder="name@example.com" required autocomplete="email">
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-label">Password</label>
+                        <input type="password" class="ag-input" id="ag-signup-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required minlength="6" autocomplete="new-password">
+                        <div class="ag-strength-track"><div class="ag-strength-bar" id="ag-strength-bar"></div></div>
+                        <span class="ag-strength-label" id="ag-strength-label"></span>
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-label">Confirm Password</label>
+                        <input type="password" class="ag-input" id="ag-signup-confirm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required autocomplete="new-password">
+                    </div>
+                    <div class="ag-field ag-recaptcha-field">
+                        <label class="ag-label">Security Verification</label>
+                        <div id="ag-recaptcha-signup" class="ag-recaptcha-widget"></div>
+                    </div>
+                    <button type="submit" class="ag-submit" id="ag-signup-btn">Create Secure Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/trendData.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/auth-gate.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
+
+
