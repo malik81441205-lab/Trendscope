@@ -71,7 +71,7 @@ function setupTabs() {
 function setupLogout() {
     document.getElementById("logout-btn").addEventListener("click", async () => {
         try {
-            await fetch("/api/logout", { method: "POST" });
+            await fetch("https://trendscope-production-3708.up.railway.app/api/logout", { method: "POST" });
             localStorage.removeItem("admin");
             window.location.href = "admin-login.html";
         } catch(e) {
@@ -82,7 +82,7 @@ function setupLogout() {
 
 // ─── API HELPERS ───
 async function fetchAdmin(endpoint, options = {}) {
-    const res = await fetch(`/api/admin/${endpoint}`, options);
+    const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/${endpoint}`, options);
     if (res.status === 401 || res.status === 403) {
         window.location.href = "admin-login.html";
         throw new Error("Unauthorized");
