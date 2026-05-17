@@ -35,6 +35,11 @@ app.use("/api/admin", adminRoutes);
 // ─── Error Handler ──────────────────────────────────────────
 app.use(errorMiddleware);
 
+// ─── Root Route ─────────────────────────────────────────────
+app.get("/", (req, res) => {
+    res.send("TrendScope Backend Running");
+});
+
 // ─── Fallback — serve frontend ──────────────────────────────
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
@@ -48,23 +53,30 @@ async function start() {
 
         // Inject default admin if not exists
         const pool = getPool();
-        const [adminCheck] = await pool.execute("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+        const [adminCheck] = await pool.execute(
+            "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+        );
+
         if (adminCheck.length === 0) {
             const adminHash = await bcrypt.hash("admin123", 10);
+
             await pool.execute(
                 "INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)",
                 ["admin@trendscope.com", adminHash, "System Admin", "admin"]
             );
+
             console.log("🔑 Default admin created: admin@trendscope.com / admin123");
         }
 
-        // Start auto-cleanup for old records (every 6 hours, max 7 days)
+        // Start auto-cleanup
         trendService.startAutoCleanup(7);
 
-        // Auto-snapshot trends hourly for major regions
+        // Hourly trend snapshot
         cron.schedule("0 * * * *", async () => {
             console.log("🕒 Running hourly trend snapshot...");
+
             const regions = ["US", "GB", "IN", "JP", "BR"];
+
             for (const region of regions) {
                 try {
                     const videos = await fetchRealTrends(region);
@@ -73,23 +85,23 @@ async function start() {
                     console.error(`❌ Hourly snapshot failed for ${region}:`, err.message);
                 }
             }
+
             console.log("✅ Hourly snapshot complete.");
         });
-        app.get("/", (req, res) => {
-  res.send("TrendScope Backend Running");
-});
 
+        // Start Express server
         app.listen(PORT, () => {
-            console.log(`\n🚀 Vid Voyage World Server running at http://localhost:${PORT}`);
+            console.log(`🚀 TrendScope Server running on port ${PORT}`);
             console.log(`📊 Historical Trend Tracking System active`);
-            console.log(`🗄️  Database tables: users, videos, creators, trend_history, regions, keywords, saved_trends`);
         });
+
     } catch (err) {
         console.error("❌ Server startup failed:", err.message || err);
+
         if (err.code === "ECONNREFUSED") {
-            console.error("💡 MySQL server is not running. Please start MySQL on port 3306.");
-            console.error("   Try: net start MySQL   OR   Start XAMPP/WAMP MySQL service");
+            console.error("💡 MySQL server is not running.");
         }
+
         process.exit(1);
     }
 }
