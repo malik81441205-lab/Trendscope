@@ -75,6 +75,9 @@ async function start() {
             }
             console.log("✅ Hourly snapshot complete.");
         });
+        app.get("/", (req, res) => {
+  res.send("TrendScope Backend Running");
+});
 
         app.listen(PORT, () => {
             console.log(`\n🚀 Vid Voyage World Server running at http://localhost:${PORT}`);
