@@ -1,4 +1,6 @@
 require("dotenv").config();
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 function formatNumber(n) {
     if (n >= 1000000000) return (n / 1000000000).toFixed(1) + "B";
