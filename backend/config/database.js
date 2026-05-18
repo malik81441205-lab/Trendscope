@@ -180,6 +180,18 @@ async function initDatabase() {
         )
     `);
 
+    // ─── Feedbacks table ────────────────────────────────────────
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS feedbacks (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            rating INT NOT NULL,
+            message TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
     // ─── Seed default settings ──────────────────────────────────
     await db.execute(
         `INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES 

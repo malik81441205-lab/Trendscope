@@ -16,6 +16,7 @@ const authRoutes = require("./routes/authRoutes");
 const trendRoutes = require("./routes/trendRoutes");
 const savedTrendRoutes = require("./routes/savedTrendRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +32,7 @@ app.use("/api", authRoutes);
 app.use("/api", trendRoutes);
 app.use("/api/saved-trends", savedTrendRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api", feedbackRoutes);
 
 // ─── Error Handler ──────────────────────────────────────────
 app.use(errorMiddleware);
