@@ -57,6 +57,7 @@ function setupTabs() {
             else if (targetId === 'trends') loadTrends();
             else if (targetId === 'activity') loadActivityFeed();
             else if (targetId === 'settings') loadSettings();
+            else if (targetId === 'feedback') loadFeedback();
         });
     });
 
@@ -399,3 +400,54 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
         alert("Failed to save settings");
     }
 });
+
+// ─── FEEDBACK TAB ───
+async function loadFeedback() {
+    try {
+        const res = await fetch("https://trendscope-production-3708.up.railway.app/api/feedback", {
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}`
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = "admin-login.html";
+            return;
+        }
+
+        const data = await res.json();
+        renderFeedbackTable(data.feedbacks || []);
+    } catch(e) {
+        console.error("Feedback load error", e);
+    }
+}
+
+function renderFeedbackTable(feedbacks) {
+    const tbody = document.getElementById("feedback-tbody");
+    if (!feedbacks || feedbacks.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 32px;'>No feedback received yet.</td></tr>";
+        return;
+    }
+
+    tbody.innerHTML = feedbacks.map(f => {
+        let stars = "";
+        for (let i = 0; i < 5; i++) {
+            stars += `<span style="color: ${i < f.rating ? '#f59e0b' : 'var(--border2)'};">★</span>`;
+        }
+
+        return `
+        <tr>
+            <td style="font-size: 12px; color: #a1a1aa;">${new Date(f.created_at).toLocaleString()}</td>
+            <td style="font-weight: 600; color: white;">${f.name}</td>
+            <td style="color: #a1a1aa;">${f.email}</td>
+            <td style="font-size: 16px;">${stars}</td>
+            <td style="max-width: 300px;">
+                <div style="color: #a1a1aa; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 13px;">
+                    ${f.message}
+                </div>
+            </td>
+        </tr>
+        `;
+    }).join("");
+}
