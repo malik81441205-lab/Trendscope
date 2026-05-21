@@ -72,7 +72,7 @@ function setupTabs() {
 function setupLogout() {
     document.getElementById("logout-btn").addEventListener("click", async () => {
         try {
-            await fetch("https://trendscope-production-3708.up.railway.app/api/logout", { method: "POST" });
+            await fetch("/api/logout", { method: "POST" });
             localStorage.removeItem("admin");
             window.location.href = "admin-login.html";
         } catch(e) {
@@ -83,7 +83,7 @@ function setupLogout() {
 
 // ─── API HELPERS ───
 async function fetchAdmin(endpoint, options = {}) {
-    const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/${endpoint}`, options);
+    const res = await fetch(`/api/admin/${endpoint}`, options);
     if (res.status === 401 || res.status === 403) {
         window.location.href = "admin-login.html";
         throw new Error("Unauthorized");
@@ -404,7 +404,7 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
 // ─── FEEDBACK TAB ───
 async function loadFeedback() {
     try {
-        const res = await fetch("https://trendscope-production-3708.up.railway.app/api/feedback", {
+        const res = await fetch("/api/feedback", {
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}`
             },
@@ -426,7 +426,7 @@ async function loadFeedback() {
 function renderFeedbackTable(feedbacks) {
     const tbody = document.getElementById("feedback-tbody");
     if (!feedbacks || feedbacks.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 32px;'>No feedback received yet.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; padding: 32px;'>No feedback received yet.</td></tr>";
         return;
     }
 
@@ -434,6 +434,15 @@ function renderFeedbackTable(feedbacks) {
         let stars = "";
         for (let i = 0; i < 5; i++) {
             stars += `<span style="color: ${i < f.rating ? '#f59e0b' : 'var(--border2)'};">★</span>`;
+        }
+
+        let statusBadge = "";
+        if (f.is_hidden) {
+            statusBadge = `<span style="padding: 4px 8px; background: rgba(244,63,94,0.1); color: #f43f5e; border-radius: 4px; font-size: 11px; font-weight: 600;">Hidden</span>`;
+        } else if (f.is_approved) {
+            statusBadge = `<span style="padding: 4px 8px; background: rgba(74,222,128,0.1); color: #4ade80; border-radius: 4px; font-size: 11px; font-weight: 600;">Approved</span>`;
+        } else {
+            statusBadge = `<span style="padding: 4px 8px; background: rgba(245,158,11,0.1); color: #f59e0b; border-radius: 4px; font-size: 11px; font-weight: 600;">Pending</span>`;
         }
 
         return `
@@ -447,7 +456,50 @@ function renderFeedbackTable(feedbacks) {
                     ${f.message}
                 </div>
             </td>
+            <td>${statusBadge}</td>
+            <td>
+                <div style="display: flex; gap: 8px;">
+                    ${!f.is_approved ? `<button onclick="approveFeedback(${f.id})" style="padding: 4px 8px; background: #4ade80; color: #000; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">Approve</button>` : ''}
+                    <button onclick="toggleFeedbackVisibility(${f.id})" style="padding: 4px 8px; background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; cursor: pointer; font-size: 11px;">${f.is_hidden ? 'Unhide' : 'Hide'}</button>
+                    <button onclick="deleteFeedback(${f.id})" style="padding: 4px 8px; background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid rgba(244,63,94,0.2); border-radius: 4px; cursor: pointer; font-size: 11px;">Delete</button>
+                </div>
+            </td>
         </tr>
         `;
     }).join("");
+}
+
+// Feedback Admin Actions
+async function adminFeedbackAction(id, endpoint, method = 'PUT') {
+    try {
+        const res = await fetch(`/api/admin/feedback/${endpoint}/${id}`, {
+            method,
+            headers: { "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}` }
+        });
+        if (res.ok) {
+            loadFeedback(); // Reload table
+        } else {
+            const data = await res.json();
+            alert(data.error || "Action failed");
+        }
+    } catch (e) {
+        alert("Action failed. See console.");
+        console.error(e);
+    }
+}
+
+function approveFeedback(id) {
+    if (confirm("Approve this feedback to display publicly?")) {
+        adminFeedbackAction(id, 'approve');
+    }
+}
+
+function toggleFeedbackVisibility(id) {
+    adminFeedbackAction(id, 'hide');
+}
+
+function deleteFeedback(id) {
+    if (confirm("Are you sure you want to permanently delete this feedback?")) {
+        adminFeedbackAction(id, '', 'DELETE'); // Route is /api/admin/feedback/:id
+    }
 }

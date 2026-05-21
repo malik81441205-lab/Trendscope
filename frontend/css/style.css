@@ -1037,3 +1037,92 @@ img{max-width:100%;display:block}
     .feedback-fab span { display: none; }
 }
 
+/* --- Testimonials Section --------------------------------- */
+.testimonials-section {
+    padding: 60px 24px;
+    margin: 40px auto;
+    max-width: 1400px;
+    background: linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.8) 100%);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.testimonials-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+.testimonials-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+.testimonials-header p {
+    font-size: 15px;
+    color: var(--text2);
+}
+.testimonials-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+.testimonial-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.3s ease;
+}
+.testimonial-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(74,222,128,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.t-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.t-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.t-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+.t-info {
+    display: flex;
+    flex-direction: column;
+}
+.t-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+}
+.t-date {
+    font-size: 12px;
+    color: var(--text2);
+}
+.t-stars {
+    font-size: 14px;
+}
+.t-message {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    font-style: italic;
+}
+.testimonials-loading, .testimonials-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    background: var(--bg2);
+    border: 1px dashed var(--border2);
+    border-radius: 12px;
+}
+

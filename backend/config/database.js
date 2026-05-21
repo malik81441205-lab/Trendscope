@@ -33,6 +33,8 @@ async function initDatabase() {
             full_name VARCHAR(255) NOT NULL,
             role VARCHAR(50) DEFAULT 'user',
             google_id VARCHAR(255) UNIQUE NULL,
+            country VARCHAR(100) DEFAULT NULL,
+            gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME NULL
         )
@@ -188,6 +190,8 @@ async function initDatabase() {
             email VARCHAR(255) NOT NULL,
             rating INT NOT NULL,
             message TEXT NOT NULL,
+            is_approved TINYINT(1) DEFAULT 0,
+            is_hidden TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `);

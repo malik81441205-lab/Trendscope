@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const { OAuth2Client } = require("google-auth-library");
 const { getPool } = require("../config/database");
 const { generateToken, setAuthCookie, clearAuthCookie } = require("../middleware/authMiddleware");
+const { validateUsername, validateEmail, VALID_COUNTRIES, VALID_GENDERS } = require("../middleware/securityMiddleware");
 
 // In production, this client ID should come from .env
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
@@ -61,34 +62,53 @@ const authController = {
 
     // Signup
     async signup(req, res) {
-        const { email, password, confirm_password, full_name } = req.body;
+        const { email, password, confirm_password, full_name, country, gender } = req.body;
         if (!email || !password || !full_name) {
             return res.status(400).json({ error: "Email, password, and full name are required." });
         }
+
+        // Username validation (reserved names, alpha-start, alphanumeric)
+        const nameCheck = validateUsername(full_name);
+        if (!nameCheck.valid) {
+            return res.status(400).json({ error: nameCheck.error });
+        }
+
+        // Email validation
+        const emailCheck = validateEmail(email);
+        if (!emailCheck.valid) {
+            return res.status(400).json({ error: emailCheck.error });
+        }
+
         if (confirm_password && password !== confirm_password) {
             return res.status(400).json({ error: "Passwords do not match." });
         }
         if (password.length < 6) {
             return res.status(400).json({ error: "Password must be at least 6 characters long." });
         }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ error: "Please enter a valid email address." });
+
+        // Country validation (if provided)
+        if (country && !VALID_COUNTRIES.includes(country)) {
+            return res.status(400).json({ error: "Please select a valid country." });
+        }
+
+        // Gender validation (if provided)
+        if (gender && !VALID_GENDERS.includes(gender)) {
+            return res.status(400).json({ error: "Please select a valid gender." });
         }
 
         const pool = getPool();
-        const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
+        const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [emailCheck.email]);
         if (existing.length > 0) {
             return res.status(409).json({ error: "An account with this email already exists." });
         }
 
         const password_hash = await bcrypt.hash(password, 10);
         const [result] = await pool.execute(
-            "INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)",
-            [email, password_hash, full_name]
+            "INSERT INTO users (email, password_hash, full_name, country, gender) VALUES (?, ?, ?, ?, ?)",
+            [emailCheck.email, password_hash, nameCheck.name, country || null, gender || null]
         );
 
-        const user = { id: result.insertId, email, role: "user", full_name };
+        const user = { id: result.insertId, email: emailCheck.email, role: "user", full_name: nameCheck.name };
         const token = generateToken(user, false);
 
         // Set HttpOnly cookie
@@ -96,7 +116,7 @@ const authController = {
 
         res.status(201).json({
             message: "Account created successfully!",
-            token, // Still returned for backward compat / localStorage user info
+            token,
             user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
         });
     },
@@ -112,6 +132,12 @@ const authController = {
         if (users.length === 0) return res.status(401).json({ error: "Invalid credentials" });
 
         const user = users[0];
+
+        // Prevent login with password for OAuth-only accounts
+        if (!user.password_hash) {
+            return res.status(401).json({ error: "This account uses Google Sign-In. Please log in with Google." });
+        }
+
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) return res.status(401).json({ error: "Invalid credentials" });
 

@@ -8,6 +8,7 @@ require("dotenv").config();
 
 const { initDatabase, getPool } = require("./config/database");
 const { errorMiddleware } = require("./middleware/errorHandler");
+const { helmetConfig, hppProtection, sanitizeBody, globalLimiter } = require("./middleware/securityMiddleware");
 const trendService = require("./services/trendService");
 const { fetchRealTrends } = require("./services/youtubeService");
 
@@ -21,11 +22,20 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ─── Middleware ──────────────────────────────────────────────
-app.use(cors({ credentials: true }));
-app.use(express.json());
+// ─── Security Middleware ─────────────────────────────────────
+app.use(helmetConfig);
+app.use(hppProtection);
+
+// ─── Core Middleware ─────────────────────────────────────────
+app.use(cors({ credentials: true, origin: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use(cookieParser());
+app.use(sanitizeBody);
 app.use(express.static(path.join(__dirname, "..", "frontend")));
+
+// ─── Global Rate Limiter (API routes only) ───────────────────
+app.use("/api", globalLimiter);
 
 // ─── API Routes ─────────────────────────────────────────────
 app.use("/api", authRoutes);

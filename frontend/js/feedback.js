@@ -59,7 +59,7 @@ async function submitFeedback(event) {
     msgEl.textContent = '';
 
     try {
-        const response = await fetch('https://trendscope-production-3708.up.railway.app/api/feedback', {
+        const response = await fetch('/api/feedback', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -111,4 +111,55 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleFeedbackModal();
         }
     });
+
+    // Load public testimonials on page load
+    loadPublicTestimonials();
 });
+
+// ─── Public Testimonials Rendering ──────────────────────────────────────
+async function loadPublicTestimonials() {
+    const container = document.getElementById('testimonials-container');
+    if (!container) return; // Not on a page with testimonials
+
+    try {
+        const res = await fetch('/api/public-feedback');
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Failed to load testimonials');
+
+        if (!data.feedbacks || data.feedbacks.length === 0) {
+            container.innerHTML = '<div class="testimonials-empty">No testimonials yet. Be the first to leave feedback!</div>';
+            return;
+        }
+
+        container.innerHTML = data.feedbacks.map(t => {
+            let stars = "";
+            for (let i = 0; i < 5; i++) {
+                stars += `<span style="color: ${i < t.rating ? '#4ade80' : 'var(--border2)'};">★</span>`;
+            }
+            
+            // Generate deterministic avatar URL
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=0D8ABC&color=fff&size=80&bold=true`;
+
+            return `
+                <div class="testimonial-card">
+                    <div class="t-header">
+                        <div class="t-user">
+                            <img src="${avatarUrl}" alt="${t.name}" class="t-avatar">
+                            <div class="t-info">
+                                <span class="t-name">${t.name}</span>
+                                <span class="t-date">${new Date(t.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <div class="t-stars">${stars}</div>
+                    </div>
+                    <div class="t-message">"${t.message}"</div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading testimonials:', error);
+        container.innerHTML = '<div class="testimonials-empty" style="color: #f43f5e;">Failed to load testimonials.</div>';
+    }
+}

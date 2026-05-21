@@ -4,13 +4,14 @@ const authController = require("../controllers/authController");
 const { asyncHandler } = require("../middleware/errorHandler");
 const { requireAuth } = require("../middleware/authMiddleware");
 const { requireRecaptcha } = require("../middleware/recaptchaMiddleware");
+const { loginLimiter, signupLimiter, adminLoginLimiter } = require("../middleware/securityMiddleware");
 
-// reCAPTCHA-protected auth routes
-router.post("/signup", requireRecaptcha, asyncHandler(authController.signup));
-router.post("/login", requireRecaptcha, asyncHandler(authController.login));
-router.post("/google-login", asyncHandler(authController.googleLogin));
-router.post("/forgot-password", requireRecaptcha, asyncHandler(authController.forgotPassword));
-router.post("/admin-login", asyncHandler(authController.adminLogin));
+// reCAPTCHA + rate-limited auth routes
+router.post("/signup", signupLimiter, requireRecaptcha, asyncHandler(authController.signup));
+router.post("/login", loginLimiter, requireRecaptcha, asyncHandler(authController.login));
+router.post("/google-login", loginLimiter, asyncHandler(authController.googleLogin));
+router.post("/forgot-password", loginLimiter, requireRecaptcha, asyncHandler(authController.forgotPassword));
+router.post("/admin-login", adminLoginLimiter, asyncHandler(authController.adminLogin));
 
 // Logout — clears HttpOnly cookie
 router.post("/logout", asyncHandler(authController.logout));

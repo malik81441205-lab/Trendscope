@@ -291,7 +291,7 @@ async function fetchData(code, retries = 3){
         let success = false;
         for (let i = 0; i < retries; i++) {
             try {
-                const r = await fetch(`https://trendscope-production-3708.up.railway.app/api/trends?country=${code}`);
+                const r = await fetch(`/api/trends?country=${code}`);
                 if (!r.ok) throw new Error('API Error');
                 videos = await r.json();
                 isLive = true;
@@ -760,8 +760,8 @@ async function refreshHistorySection() {
 
     try {
         const [historyRes, compareRes] = await Promise.all([
-            AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/trends/history?region=${region}&days=${selectedHistoryDays}`),
-            AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/trends/compare?region=${region}`)
+            AuthGate.authFetch(`/api/trends/history?region=${region}&days=${selectedHistoryDays}`),
+            AuthGate.authFetch(`/api/trends/compare?region=${region}`)
         ]);
 
         if (historyRes.status === 401 || compareRes.status === 401) {
@@ -974,7 +974,7 @@ function loadSavedTrendIds() {
     if (!user) { currentUserId = null; savedTrendIds = new Set(); return; }
     currentUserId = user.id;
 
-    AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine/ids')
+    AuthGate.authFetch('/api/saved-trends/mine/ids')
         .then(r => { if (!r.ok) throw new Error('Auth'); return r.json(); })
         .then(ids => {
             savedTrendIds = new Set(ids);
@@ -995,11 +995,11 @@ async function toggleSaveTrend(videoId, btnEl) {
     if (isSaved) {
         // Unsave — need to find the saved_trend id first
         try {
-            const res = await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine');
+            const res = await AuthGate.authFetch('/api/saved-trends/mine');
             const saved = await res.json();
             const found = saved.find(s => s.video_youtube_id === videoId);
             if (found) {
-                await AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/saved-trends/${found.id}`, { method: 'DELETE' });
+                await AuthGate.authFetch(`/api/saved-trends/${found.id}`, { method: 'DELETE' });
                 savedTrendIds.delete(videoId);
                 btnEl.classList.remove('saved');
                 btnEl.innerHTML = ICONS.bookmark;
@@ -1013,7 +1013,7 @@ async function toggleSaveTrend(videoId, btnEl) {
         if (!video) return;
 
         try {
-            await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends', {
+            await AuthGate.authFetch('/api/saved-trends', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1062,7 +1062,7 @@ async function renderSavedTrends() {
     grid.innerHTML = Array(3).fill(0).map(() => `<div class="skeleton-card" style="height:80px"><div class="skeleton-bar w80"></div><div class="skeleton-bar w60"></div></div>`).join('');
 
     try {
-        const res = await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine');
+        const res = await AuthGate.authFetch('/api/saved-trends/mine');
         const savedList = await res.json();
 
         if (countEl) countEl.textContent = savedList.length + ' saved';
@@ -1101,7 +1101,7 @@ async function renderSavedTrends() {
 
 async function removeSavedTrend(id, videoYoutubeId) {
     try {
-        await AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/saved-trends/${id}`, { method: 'DELETE' });
+        await AuthGate.authFetch(`/api/saved-trends/${id}`, { method: 'DELETE' });
         savedTrendIds.delete(videoYoutubeId);
         showToast('Trend removed');
         renderSavedTrends();
