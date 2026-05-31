@@ -196,6 +196,34 @@ async function initDatabase() {
         )
     `);
 
+    // ─── Migration: ensure feedbacks columns exist ──────────────
+    // Handles case where table was created before these columns were added
+    const feedbackMigrations = [
+        "ALTER TABLE feedbacks ADD COLUMN is_approved TINYINT(1) DEFAULT 0",
+        "ALTER TABLE feedbacks ADD COLUMN is_hidden TINYINT(1) DEFAULT 0"
+    ];
+    for (const sql of feedbackMigrations) {
+        try {
+            await db.execute(sql);
+            console.log(`✅ Migration applied: ${sql}`);
+        } catch (err) {
+            if (err.code === "ER_DUP_COLUMN_NAME") {
+                // Column already exists — safe to ignore
+            } else {
+                console.error(`⚠️ Migration warning: ${err.message}`);
+            }
+        }
+    }
+    // Approve any existing feedback rows so they appear on the public page
+    try {
+        const [result] = await db.execute("UPDATE feedbacks SET is_approved = 1 WHERE is_approved = 0");
+        if (result.affectedRows > 0) {
+            console.log(`✅ Auto-approved ${result.affectedRows} existing feedback rows`);
+        }
+    } catch (err) {
+        console.error("⚠️ Feedback auto-approve warning:", err.message);
+    }
+
     // ─── Seed default settings ──────────────────────────────────
     await db.execute(
         `INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES 
