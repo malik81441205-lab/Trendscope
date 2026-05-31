@@ -72,7 +72,7 @@ function setupTabs() {
 function setupLogout() {
     document.getElementById("logout-btn").addEventListener("click", async () => {
         try {
-            await fetch("/api/logout", { method: "POST" });
+            await fetch("https://trendscope-production-3708.up.railway.app/api/logout", { method: "POST", credentials: "include" });
             localStorage.removeItem("admin");
             window.location.href = "admin-login.html";
         } catch(e) {
@@ -83,7 +83,8 @@ function setupLogout() {
 
 // ─── API HELPERS ───
 async function fetchAdmin(endpoint, options = {}) {
-    const res = await fetch(`/api/admin/${endpoint}`, options);
+    options.credentials = 'include';
+    const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/${endpoint}`, options);
     if (res.status === 401 || res.status === 403) {
         window.location.href = "admin-login.html";
         throw new Error("Unauthorized");
@@ -404,11 +405,11 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
 // ─── FEEDBACK TAB ───
 async function loadFeedback() {
     try {
-        const res = await fetch("/api/feedback", {
+        const res = await fetch("https://trendscope-production-3708.up.railway.app/api/feedback", {
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}`
             },
-            credentials: 'same-origin'
+            credentials: 'include'
         });
         
         if (res.status === 401 || res.status === 403) {
@@ -472,9 +473,10 @@ function renderFeedbackTable(feedbacks) {
 // Feedback Admin Actions
 async function adminFeedbackAction(id, endpoint, method = 'PUT') {
     try {
-        const res = await fetch(`/api/admin/feedback/${endpoint}/${id}`, {
+        const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/feedback/${endpoint}/${id}`, {
             method,
-            headers: { "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}` }
+            headers: { "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}` },
+            credentials: 'include'
         });
         if (res.ok) {
             loadFeedback(); // Reload table

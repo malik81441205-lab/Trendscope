@@ -60,8 +60,20 @@ const AuthGate = (() => {
 
     // ─── Auth Fetch (cookies sent automatically) ────────────
     function authFetch(url, opts = {}) {
-        // credentials: 'same-origin' ensures HttpOnly cookies are sent
-        opts.credentials = 'same-origin';
+        // Auto-prepend backend host for relative /api/ calls
+        if (url.startsWith('/api/')) {
+            url = 'https://trendscope-production-3708.up.railway.app' + url;
+        }
+        // credentials: 'include' ensures HttpOnly cookies are sent cross-origin
+        opts.credentials = 'include';
+        // Add Authorization header fallback using token from localStorage
+        const token = getToken();
+        if (token) {
+            opts.headers = {
+                ...opts.headers,
+                'Authorization': `Bearer ${token}`
+            };
+        }
         return fetch(url, opts);
     }
 
@@ -76,7 +88,7 @@ const AuthGate = (() => {
         // Also try localStorage token as fallback indicator
         const hasLocalUser = !!getUser();
         try {
-            const res = await fetch('/api/verify-token', { credentials: 'same-origin' });
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/verify-token', { credentials: 'include' });
             if (!res.ok) { clearToken(); onUnauthenticated(); return false; }
             const data = await res.json();
             if (data.valid && data.user) { setUser(data.user); _token = localStorage.getItem('auth_token'); onAuthenticated(); return true; }
@@ -134,7 +146,7 @@ const AuthGate = (() => {
 
     async function logout() {
         // Call server to clear HttpOnly cookie
-        try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); } catch(e) {}
+        try { await fetch('https://trendscope-production-3708.up.railway.app/api/logout', { method: 'POST', credentials: 'include' }); } catch(e) {}
         clearToken();
         onUnauthenticated();
         if (typeof window.savedTrendIds !== 'undefined') window.savedTrendIds = new Set();
@@ -175,7 +187,7 @@ const AuthGate = (() => {
     // ─── Google reCAPTCHA v2 ────────────────────────────────
     async function loadRecaptchaSiteKey() {
         try {
-            const res = await fetch('/api/recaptcha-key');
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/recaptcha-key');
             const data = await res.json();
             _recaptchaSiteKey = data.siteKey || '';
         } catch (e) {
@@ -298,7 +310,7 @@ const AuthGate = (() => {
         btn.textContent = 'Authenticating...'; btn.disabled = true;
 
         try {
-            const res = await fetch('/api/login', {
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/login', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, rememberMe: remember, recaptchaToken })
             });
@@ -358,7 +370,7 @@ const AuthGate = (() => {
         btn.textContent = 'Creating Account...'; btn.disabled = true;
 
         try {
-            const res = await fetch('/api/signup', {
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/signup', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ full_name, email, password, confirm_password: confirm, country, gender, recaptchaToken })
             });
@@ -393,7 +405,7 @@ const AuthGate = (() => {
         }
 
         try {
-            const res = await fetch('/api/forgot-password', {
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/forgot-password', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, recaptchaToken })
             });
@@ -450,7 +462,7 @@ const AuthGate = (() => {
     async function handleGoogleLogin(response) {
         clearFormErrors();
         try {
-            const res = await fetch('/api/google-login', {
+            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/google-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ googleToken: response.credential })

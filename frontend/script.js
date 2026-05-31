@@ -3,7 +3,7 @@
    ============================================================ */
 
 // ─── Configuration ──────────────────────────────────────────
-const API_BASE = window.location.origin; // Backend serves both
+const API_BASE = 'https://trendscope-production-3708.up.railway.app';
 let autoRefreshInterval = null;
 
 // ─── DOM Elements ───────────────────────────────────────────
