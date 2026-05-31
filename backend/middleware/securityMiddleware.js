@@ -48,7 +48,7 @@ function validateUsername(name) {
 
     // Must start with an alphabet
     if (!/^[a-zA-Z]/.test(trimmed)) {
-        return { valid: false, error: "Name must start with a letter (e.g. Kashif123, not 123Kashif)." };
+        return { valid: false, error: "Name must start with a letter." };
     }
 
     // Only allow alphabets, numbers, and spaces (for full names)

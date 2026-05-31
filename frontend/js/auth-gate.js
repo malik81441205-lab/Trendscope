@@ -277,8 +277,80 @@ const AuthGate = (() => {
         if (el) { el.textContent = msg; el.style.display = 'block'; }
     }
 
+    function showFieldError(fieldId, msg) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.add('is-invalid');
+        }
+        let errSpanId = '';
+        if (fieldId === 'ag-signup-name') errSpanId = 'ag-err-name';
+        else if (fieldId === 'ag-signup-email') errSpanId = 'ag-err-email';
+        else if (fieldId === 'ag-signup-password') errSpanId = 'ag-err-password';
+        else if (fieldId === 'ag-signup-confirm') errSpanId = 'ag-err-confirm';
+        else if (fieldId === 'ag-signup-country') errSpanId = 'ag-err-country';
+        else if (fieldId === 'ag-signup-gender') errSpanId = 'ag-err-gender';
+        else if (fieldId === 'ag-recaptcha-signup') errSpanId = 'ag-err-recaptcha';
+        
+        if (errSpanId) {
+            const errSpan = document.getElementById(errSpanId);
+            if (errSpan) {
+                errSpan.textContent = msg;
+                errSpan.classList.add('active');
+            }
+        }
+    }
+
+    function clearFieldErrors() {
+        document.querySelectorAll('.ag-input, .ag-recaptcha-widget').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        document.querySelectorAll('.ag-field-error').forEach(el => {
+            el.textContent = '';
+            el.classList.remove('active');
+        });
+    }
+
+    function focusAndScrollToFirstInvalid() {
+        const panel = document.getElementById('ag-signup-panel');
+        if (!panel) return;
+        const firstInvalid = panel.querySelector('.is-invalid');
+        if (firstInvalid) {
+            if (typeof firstInvalid.focus === 'function') {
+                firstInvalid.focus();
+            }
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function handleSignupError(errorMsg) {
+        if (!errorMsg) return;
+        const msg = errorMsg.toLowerCase();
+        if (msg.includes('email')) {
+            showFieldError('ag-signup-email', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else if (msg.includes('name')) {
+            showFieldError('ag-signup-name', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else if (msg.includes('password') || msg.includes('passwords')) {
+            showFieldError('ag-signup-password', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else if (msg.includes('country')) {
+            showFieldError('ag-signup-country', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else if (msg.includes('gender')) {
+            showFieldError('ag-signup-gender', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else if (msg.includes('captcha') || msg.includes('verification')) {
+            showFieldError('ag-recaptcha-signup', errorMsg);
+            focusAndScrollToFirstInvalid();
+        } else {
+            showError('ag-signup', errorMsg);
+        }
+    }
+
     function clearFormErrors() {
         document.querySelectorAll('.ag-error, .ag-success').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+        clearFieldErrors();
     }
 
     function showToastMsg(msg) {
@@ -343,23 +415,69 @@ const AuthGate = (() => {
         const password = document.getElementById('ag-signup-password').value;
         const confirm = document.getElementById('ag-signup-confirm').value;
 
-        if (!full_name || !email || !password || !confirm) { showError('ag-signup', 'Please fill in all fields.'); return; }
+        let hasErrors = false;
 
-        // Username validation (frontend mirror of backend rules)
-        if (!/^[a-zA-Z]/.test(full_name)) { showError('ag-signup', 'Name must start with a letter (e.g. Kashif123, not 123Kashif).'); return; }
-        if (!/^[a-zA-Z][a-zA-Z0-9 ]*$/.test(full_name)) { showError('ag-signup', 'Name can only contain letters, numbers, and spaces. No special characters.'); return; }
-        const normalized = full_name.replace(/\s+/g, '').toLowerCase();
-        if (RESERVED_NAMES.includes(normalized)) { showError('ag-signup', `The name "${full_name}" is reserved and cannot be used.`); return; }
+        // Name Validation
+        if (!full_name) {
+            showFieldError('ag-signup-name', 'Full name is required.');
+            hasErrors = true;
+        } else if (!/^[a-zA-Z]/.test(full_name)) {
+            showFieldError('ag-signup-name', 'Name must start with a letter.');
+            hasErrors = true;
+        } else if (!/^[a-zA-Z][a-zA-Z0-9 ]*$/.test(full_name)) {
+            showFieldError('ag-signup-name', 'Only letters, numbers and spaces allowed.');
+            hasErrors = true;
+        } else {
+            const normalized = full_name.replace(/\s+/g, '').toLowerCase();
+            if (RESERVED_NAMES.includes(normalized)) {
+                showFieldError('ag-signup-name', `The name "${full_name}" is reserved and cannot be used.`);
+                hasErrors = true;
+            }
+        }
 
-        if (password !== confirm) { showError('ag-signup', 'Passwords do not match.'); return; }
-        if (password.length < 6) { showError('ag-signup', 'Password must be at least 6 characters.'); return; }
-        const s = checkPasswordStrength(password);
-        if (s.score < 2) { showError('ag-signup', 'Password is too weak. Add uppercase, numbers, or symbols.'); return; }
+        // Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+            showFieldError('ag-signup-email', 'Email address is required.');
+            hasErrors = true;
+        } else if (!emailRegex.test(email)) {
+            showFieldError('ag-signup-email', 'Please enter a valid email address.');
+            hasErrors = true;
+        }
 
-        // Get reCAPTCHA token
+        // Password Validation
+        if (!password) {
+            showFieldError('ag-signup-password', 'Password is required.');
+            hasErrors = true;
+        } else if (password.length < 6) {
+            showFieldError('ag-signup-password', 'Password must be at least 6 characters.');
+            hasErrors = true;
+        } else {
+            const s = checkPasswordStrength(password);
+            if (s.score < 2) {
+                showFieldError('ag-signup-password', 'Password must contain letters and numbers.');
+                hasErrors = true;
+            }
+        }
+
+        // Confirm Password Validation
+        if (!confirm) {
+            showFieldError('ag-signup-confirm', 'Please confirm your password.');
+            hasErrors = true;
+        } else if (password !== confirm) {
+            showFieldError('ag-signup-confirm', 'Passwords do not match.');
+            hasErrors = true;
+        }
+
+        // reCAPTCHA Validation
         const recaptchaToken = getRecaptchaToken(_recaptchaSignupWidgetId);
         if (_recaptchaSiteKey && !recaptchaToken) {
-            showError('ag-signup', 'Please complete the CAPTCHA verification.');
+            showFieldError('ag-recaptcha-signup', 'Please complete the CAPTCHA verification.');
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            focusAndScrollToFirstInvalid();
             return;
         }
 
@@ -383,7 +501,7 @@ const AuthGate = (() => {
                 showToastMsg('Account created! Welcome, ' + (data.user.full_name) + '! 🎉');
                 if (_pendingAction) { const fn = _pendingAction; _pendingAction = null; setTimeout(fn, 300); }
             } else {
-                showError('ag-signup', data.error || 'Signup failed');
+                handleSignupError(data.error || 'Signup failed');
                 resetRecaptchaWidgets();
             }
         } catch (err) {

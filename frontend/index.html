@@ -458,8 +458,8 @@
 
             <!-- SIGNUP PANEL -->
             <div class="ag-form-panel" id="ag-signup-panel">
-                <div class="ag-error" id="ag-signup-error"></div>
-                <div class="ag-success" id="ag-signup-success"></div>
+                <div class="ag-error" id="ag-signup-error" style="display:none"></div>
+                <div class="ag-success" id="ag-signup-success" style="display:none"></div>
 
                 <!-- Google Auth Container -->
                 <div class="ag-google-container">
@@ -485,18 +485,20 @@
                 <form id="ag-signup-form" autocomplete="on">
                     <div class="ag-field">
                         <label class="ag-label">Full Name</label>
-                        <input type="text" class="ag-input" id="ag-signup-name" placeholder="e.g. Kashif123" required autocomplete="name">
-                        <span class="ag-hint" id="ag-name-hint" style="font-size:11px;color:#a1a1aa;margin-top:4px;display:block;">Must start with a letter. Letters, numbers & spaces only.</span>
+                        <input type="text" class="ag-input" id="ag-signup-name" placeholder="John Smith" required autocomplete="name">
+                        <span class="ag-hint" id="ag-name-hint">Must start with a letter. Letters, numbers & spaces only.</span>
+                        <span class="ag-field-error" id="ag-err-name"></span>
                     </div>
                     <div class="ag-field">
                         <label class="ag-label">Email Address</label>
-                        <input type="email" class="ag-input" id="ag-signup-email" placeholder="name@example.com" required autocomplete="email">
+                        <input type="email" class="ag-input" id="ag-signup-email" placeholder="yourname@example.com" required autocomplete="email">
+                        <span class="ag-field-error" id="ag-err-email"></span>
                     </div>
                     <div class="ag-field-row" style="display:flex;gap:12px;">
                         <div class="ag-field" style="flex:1;">
                             <label class="ag-label">Country</label>
                             <select class="ag-input" id="ag-signup-country">
-                                <option value="">Select Country</option>
+                                <option value="">Select your country</option>
                                 <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Argentina</option><option>Australia</option><option>Austria</option>
                                 <option>Bangladesh</option><option>Belgium</option><option>Brazil</option><option>Canada</option><option>Chile</option><option>China</option><option>Colombia</option>
                                 <option>Czech Republic</option><option>Denmark</option><option>Egypt</option><option>Ethiopia</option><option>Finland</option><option>France</option>
@@ -511,6 +513,7 @@
                                 <option>Turkey</option><option>UAE</option><option>Uganda</option><option>Ukraine</option><option>United Kingdom</option><option>United States</option>
                                 <option>Uruguay</option><option>Uzbekistan</option><option>Venezuela</option><option>Vietnam</option><option>Yemen</option><option>Zimbabwe</option>
                             </select>
+                            <span class="ag-field-error" id="ag-err-country"></span>
                         </div>
                         <div class="ag-field" style="flex:1;">
                             <label class="ag-label">Gender</label>
@@ -521,21 +524,25 @@
                                 <option value="other">Other</option>
                                 <option value="prefer_not_to_say">Prefer not to say</option>
                             </select>
+                            <span class="ag-field-error" id="ag-err-gender"></span>
                         </div>
                     </div>
                     <div class="ag-field">
                         <label class="ag-label">Password</label>
-                        <input type="password" class="ag-input" id="ag-signup-password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <input type="password" class="ag-input" id="ag-signup-password" placeholder="Enter a strong password" required minlength="6" autocomplete="new-password">
                         <div class="ag-strength-track"><div class="ag-strength-bar" id="ag-strength-bar"></div></div>
                         <span class="ag-strength-label" id="ag-strength-label"></span>
+                        <span class="ag-field-error" id="ag-err-password"></span>
                     </div>
                     <div class="ag-field">
                         <label class="ag-label">Confirm Password</label>
-                        <input type="password" class="ag-input" id="ag-signup-confirm" placeholder="••••••••" required autocomplete="new-password">
+                        <input type="password" class="ag-input" id="ag-signup-confirm" placeholder="Re-enter your password" required autocomplete="new-password">
+                        <span class="ag-field-error" id="ag-err-confirm"></span>
                     </div>
                     <div class="ag-field ag-recaptcha-field">
                         <label class="ag-label">Security Verification</label>
                         <div id="ag-recaptcha-signup" class="ag-recaptcha-widget"></div>
+                        <span class="ag-field-error" id="ag-err-recaptcha"></span>
                     </div>
                     <button type="submit" class="ag-submit" id="ag-signup-btn">Create Secure Account</button>
                 </form>

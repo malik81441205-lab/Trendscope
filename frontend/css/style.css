@@ -588,6 +588,30 @@ img{max-width:100%;display:block}
     box-shadow: 0 0 0 3px var(--green2);
 }
 .ag-input::placeholder { color: var(--text3); }
+.ag-input.is-invalid {
+    border-color: var(--red) !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+}
+.ag-input.is-invalid:focus {
+    border-color: var(--red) !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25) !important;
+}
+.ag-recaptcha-widget.is-invalid {
+    border: 1px solid var(--red) !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+    display: inline-block;
+}
+.ag-field-error {
+    display: none;
+    color: var(--red);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+.ag-field-error.active {
+    display: block;
+}
 
 /* CAPTCHA */
 .ag-captcha-box {
