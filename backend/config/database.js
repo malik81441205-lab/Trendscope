@@ -214,6 +214,26 @@ async function initDatabase() {
             }
         }
     }
+
+    // ─── Migration: ensure users columns exist ──────────────────
+    // Handles case where users table was created before country/gender were added.
+    // This is the root cause of: "Unknown column 'country' in 'field list'"
+    const usersMigrations = [
+        "ALTER TABLE users ADD COLUMN country VARCHAR(100) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL"
+    ];
+    for (const sql of usersMigrations) {
+        try {
+            await db.execute(sql);
+            console.log(`✅ Users migration applied: ${sql.split(" ADD COLUMN ")[1].split(" ")[0]}`);
+        } catch (err) {
+            if (err.code === "ER_DUP_COLUMN_NAME") {
+                // Column already exists — safe to ignore
+            } else {
+                console.error(`⚠️ Users migration warning: ${err.message}`);
+            }
+        }
+    }
     // Approve any existing feedback rows so they appear on the public page
     try {
         const [result] = await db.execute("UPDATE feedbacks SET is_approved = 1 WHERE is_approved = 0");
