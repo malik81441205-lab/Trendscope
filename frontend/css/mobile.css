@@ -316,14 +316,30 @@
     /* ─── GROWTH INSIGHTS ─── */
     .growth-section { gap: 12px; }
 
-    /* ─── FAB BUTTON ─── */
+    /* ─── FAB BUTTONS ─── */
     .fab-bottom {
         bottom: 76px !important;
-        right: 10px;
-        width: 36px; height: 36px;
+        right: 16px !important;
+        width: 36px !important;
+        height: 36px !important;
         max-width: 36px !important;
     }
     .fab-bottom svg { width: 16px; height: 16px; }
+
+    .feedback-fab {
+        bottom: 128px !important;
+        right: 16px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .feedback-fab span {
+        display: none !important;
+    }
 
     /* ─── FOOTER ─── */
     .footer {
@@ -340,6 +356,38 @@
     .about-grid {
         grid-template-columns: 1fr !important;
         width: 100% !important;
+    }
+
+    /* ─── USER FEEDBACK SECTION MOBILE ─── */
+    .testimonials-section {
+        padding: 16px 12px !important;
+        margin: 16px auto !important;
+    }
+    .testimonials-container {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .testimonial-card {
+        padding: 12px !important;
+        gap: 8px !important;
+        border-radius: 8px !important;
+    }
+    .t-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    .t-name {
+        font-size: 12.5px !important;
+    }
+    .t-date {
+        font-size: 10px !important;
+    }
+    .t-stars {
+        font-size: 10px !important;
+    }
+    .t-message {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
     }
 }
 

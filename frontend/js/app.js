@@ -53,12 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Scroll to bottom
-    const sbb = document.getElementById('scroll-bottom-btn');
+    // Scroll to top
+    const sbb = document.getElementById('scroll-top-btn');
     if(sbb) {
         sbb.addEventListener('click', () => {
-            const aboutSec = document.getElementById('about-us');
-            if(aboutSec) aboutSec.scrollIntoView({behavior: 'smooth'});
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 

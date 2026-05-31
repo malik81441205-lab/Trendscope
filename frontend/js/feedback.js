@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ─── Public Testimonials Rendering ──────────────────────────────────────
+let loadedFeedbacks = [];
+let showAllFeedbacksState = false;
+
 async function loadPublicTestimonials() {
     const container = document.getElementById('testimonials-container');
     if (!container) return; // Not on a page with testimonials
@@ -128,39 +131,87 @@ async function loadPublicTestimonials() {
 
         if (!res.ok) throw new Error(data.error || 'Failed to load testimonials');
 
-        if (!data.feedbacks || data.feedbacks.length === 0) {
-            container.innerHTML = '<div class="testimonials-empty">No testimonials yet. Be the first to leave feedback!</div>';
-            return;
-        }
-
-        container.innerHTML = data.feedbacks.map(t => {
-            let stars = "";
-            for (let i = 0; i < 5; i++) {
-                stars += `<span style="color: ${i < t.rating ? '#4ade80' : 'var(--border2)'};">★</span>`;
-            }
-            
-            // Generate deterministic avatar URL
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=0D8ABC&color=fff&size=80&bold=true`;
-
-            return `
-                <div class="testimonial-card">
-                    <div class="t-header">
-                        <div class="t-user">
-                            <img src="${avatarUrl}" alt="${t.name}" class="t-avatar">
-                            <div class="t-info">
-                                <span class="t-name">${t.name}</span>
-                                <span class="t-date">${new Date(t.created_at).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        <div class="t-stars">${stars}</div>
-                    </div>
-                    <div class="t-message">"${t.message}"</div>
-                </div>
-            `;
-        }).join('');
-
+        loadedFeedbacks = data.feedbacks || [];
+        showAllFeedbacksState = false; // Reset state on load
+        
+        renderFeedbacksList();
     } catch (error) {
         console.error('Error loading testimonials:', error);
         container.innerHTML = '<div class="testimonials-empty" style="color: #f43f5e;">Failed to load testimonials.</div>';
+    }
+}
+
+function renderFeedbacksList() {
+    const container = document.getElementById('testimonials-container');
+    if (!container) return;
+
+    if (loadedFeedbacks.length === 0) {
+        container.innerHTML = '<div class="testimonials-empty">No testimonials yet. Be the first to leave feedback!</div>';
+        toggleViewAllButtonVisibility(false);
+        return;
+    }
+
+    const feedbacksToRender = showAllFeedbacksState ? loadedFeedbacks : loadedFeedbacks.slice(0, 3);
+
+    container.innerHTML = feedbacksToRender.map(t => {
+        let stars = "";
+        for (let i = 0; i < 5; i++) {
+            stars += `<span style="color: ${i < t.rating ? '#4ade80' : 'var(--border2)'};">★</span>`;
+        }
+        
+        // Generate deterministic avatar URL
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=0D8ABC&color=fff&size=80&bold=true`;
+
+        return `
+            <div class="testimonial-card">
+                <div class="t-header">
+                    <div class="t-user">
+                        <img src="${avatarUrl}" alt="${t.name}" class="t-avatar">
+                        <div class="t-info">
+                            <span class="t-name">${t.name}</span>
+                            <span class="t-date">${new Date(t.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="t-stars">${stars}</div>
+                </div>
+                <div class="t-message">${t.message}</div>
+            </div>
+        `;
+    }).join('');
+
+    toggleViewAllButtonVisibility(loadedFeedbacks.length > 3);
+}
+
+function toggleViewAllButtonVisibility(visible) {
+    let btn = document.getElementById('view-all-feedback-btn');
+    let wrapper = document.getElementById('view-all-feedback-btn-wrapper');
+    
+    if (!visible) {
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+    }
+
+    if (!btn) {
+        const section = document.getElementById('section-testimonials');
+        
+        btn = document.createElement('button');
+        btn.id = 'view-all-feedback-btn';
+        btn.className = 'view-all';
+        btn.textContent = showAllFeedbacksState ? 'Show Less' : 'View All Feedback';
+        btn.onclick = () => {
+            showAllFeedbacksState = !showAllFeedbacksState;
+            btn.textContent = showAllFeedbacksState ? 'Show Less' : 'View All Feedback';
+            renderFeedbacksList();
+        };
+
+        wrapper = document.createElement('div');
+        wrapper.id = 'view-all-feedback-btn-wrapper';
+        wrapper.style.cssText = "display:flex; justify-content:center; margin-top:20px; width:100%;";
+        wrapper.appendChild(btn);
+        
+        section.appendChild(wrapper);
+    } else {
+        if (wrapper) wrapper.style.display = 'flex';
+        btn.textContent = showAllFeedbacksState ? 'Show Less' : 'View All Feedback';
     }
 }
