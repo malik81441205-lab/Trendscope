@@ -35,6 +35,9 @@ async function initDatabase() {
             google_id VARCHAR(255) UNIQUE NULL,
             country VARCHAR(100) DEFAULT NULL,
             gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL,
+            is_verified TINYINT(1) DEFAULT 0,
+            verification_code VARCHAR(6) DEFAULT NULL,
+            verification_code_expires DATETIME DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME NULL
         )
@@ -220,7 +223,10 @@ async function initDatabase() {
     // This is the root cause of: "Unknown column 'country' in 'field list'"
     const usersMigrations = [
         "ALTER TABLE users ADD COLUMN country VARCHAR(100) DEFAULT NULL",
-        "ALTER TABLE users ADD COLUMN gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL"
+        "ALTER TABLE users ADD COLUMN gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN is_verified TINYINT(1) DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN verification_code VARCHAR(6) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME DEFAULT NULL"
     ];
     for (const sql of usersMigrations) {
         try {
@@ -233,6 +239,13 @@ async function initDatabase() {
                 console.error(`⚠️ Users migration warning: ${err.message}`);
             }
         }
+    }
+    // Ensure all existing admin accounts are verified
+    try {
+        await db.execute("UPDATE users SET is_verified = 1 WHERE role = 'admin'");
+        console.log("✅ Existing admin verification verified");
+    } catch (err) {
+        console.error("⚠️ Admin verification query warning:", err.message);
     }
     // Approve any existing feedback rows so they appear on the public page
     try {

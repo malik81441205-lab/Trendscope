@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cookie-consent.css">
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
 </head>
 
@@ -357,7 +358,10 @@
                 <p class="footer-text">Professional YouTube trend analytics across 8+ global markets</p>
                 <div class="footer-links">
                     <a href="#" onclick="event.preventDefault(); AuthGate.showModal(); AuthGate.switchTab('login');">Login</a><span class="footer-dot">•</span>
-                    <a href="#" onclick="event.preventDefault(); AuthGate.showModal(); AuthGate.switchTab('signup');">Sign Up</a>
+                    <a href="#" onclick="event.preventDefault(); AuthGate.showModal(); AuthGate.switchTab('signup');">Sign Up</a><span class="footer-dot">•</span>
+                    <a href="privacy-policy.html">Privacy Policy</a><span class="footer-dot">•</span>
+                    <a href="cookie-policy.html">Cookie Policy</a><span class="footer-dot">•</span>
+                    <a href="#" data-cc-open-settings>Manage Cookies</a>
                 </div>
                 <p class="footer-copy">© 2026 TrendScope. Real-time data syncing active.</p>
             </div>
@@ -551,6 +555,28 @@
                     <button type="submit" class="ag-submit" id="ag-signup-btn">Create Secure Account</button>
                 </form>
             </div>
+
+            <!-- VERIFICATION PANEL -->
+            <div class="ag-form-panel" id="ag-verify-panel">
+                <div class="ag-error" id="ag-verify-error" style="display:none"></div>
+                <div class="ag-success" id="ag-verify-success" style="display:none"></div>
+
+                <p class="ag-verify-text" style="color: var(--text2); font-size: 13.5px; line-height: 1.5; margin-bottom: 20px; text-align: center;">
+                    We have sent a 6-digit verification code to <strong id="ag-verify-email-display" style="color: var(--green);">your email</strong>. Please enter it below to verify your account.
+                </p>
+
+                <form id="ag-verify-form">
+                    <div class="ag-field">
+                        <label class="ag-label" style="text-align: center; display: block;">Verification Code</label>
+                        <input type="text" class="ag-input" id="ag-verify-code" placeholder="123456" required maxlength="6" pattern="\d{6}" style="text-align: center; font-size: 24px; letter-spacing: 8px; font-weight: 700; color: var(--green); border-color: rgba(74, 222, 128, 0.2);">
+                        <span class="ag-field-error" id="ag-err-verify-code" style="text-align: center; display: block;"></span>
+                    </div>
+                    <button type="submit" class="ag-submit" id="ag-verify-btn">Verify Account</button>
+                    <div style="text-align: center; margin-top: 16px;">
+                        <a href="#" class="ag-forgot" id="ag-resend-code">Resend Code</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -596,10 +622,98 @@
         </div>
     </div>
 
+    <!-- ═══ COOKIE CONSENT BANNER ═══ -->
+    <div class="cc-banner" id="cc-banner">
+        <div class="cc-banner-inner">
+            <div class="cc-banner-content">
+                <div class="cc-banner-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div class="cc-banner-text">
+                    <div class="cc-banner-title">We Value Your Privacy</div>
+                    <p class="cc-banner-desc">We use cookies to enhance your experience, analyze site traffic, and serve personalized content. You can manage your preferences at any time. <a href="cookie-policy.html">Learn more</a></p>
+                </div>
+            </div>
+            <div class="cc-banner-actions">
+                <button class="cc-btn cc-btn-accept" id="cc-btn-accept">Accept All</button>
+                <button class="cc-btn cc-btn-reject" id="cc-btn-reject">Reject All</button>
+                <button class="cc-btn cc-btn-customize" id="cc-btn-customize">Customize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ COOKIE SETTINGS MODAL ═══ -->
+    <div class="cc-modal-overlay" id="cc-modal-overlay">
+        <div class="cc-modal">
+            <button class="cc-modal-close" id="cc-modal-close" title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="cc-modal-header">
+                <div class="cc-modal-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h2 class="cc-modal-title">Cookie Settings</h2>
+                <p class="cc-modal-subtitle">Manage your cookie preferences. Required cookies cannot be disabled as they are essential for the site to function.</p>
+            </div>
+            <div class="cc-categories">
+                <!-- Required Cookies -->
+                <div class="cc-category">
+                    <div class="cc-category-header">
+                        <div class="cc-category-info">
+                            <div class="cc-category-icon cc-icon-required">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <span class="cc-category-name">Required Cookies</span>
+                        </div>
+                        <span class="cc-category-badge">Always On</span>
+                    </div>
+                    <p class="cc-category-desc">Essential for authentication, security, and basic site functionality. These cannot be disabled.</p>
+                </div>
+                <!-- Analytics Cookies -->
+                <div class="cc-category">
+                    <div class="cc-category-header">
+                        <div class="cc-category-info">
+                            <div class="cc-category-icon cc-icon-analytics">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                            </div>
+                            <span class="cc-category-name">Analytics Cookies</span>
+                        </div>
+                        <label class="cc-toggle">
+                            <input type="checkbox" id="cc-toggle-analytics">
+                            <span class="cc-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="cc-category-desc">Help us understand how visitors interact with TrendScope. Data is collected anonymously to improve the platform.</p>
+                </div>
+                <!-- Preference Cookies -->
+                <div class="cc-category">
+                    <div class="cc-category-header">
+                        <div class="cc-category-info">
+                            <div class="cc-category-icon cc-icon-preferences">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </div>
+                            <span class="cc-category-name">Preference Cookies</span>
+                        </div>
+                        <label class="cc-toggle">
+                            <input type="checkbox" id="cc-toggle-preferences">
+                            <span class="cc-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="cc-category-desc">Remember your dashboard layout, selected markets, regional settings, and other personalization choices.</p>
+                </div>
+            </div>
+            <div class="cc-modal-actions">
+                <button class="cc-btn cc-btn-reject" id="cc-modal-save">Save Preferences</button>
+                <button class="cc-btn cc-btn-accept" id="cc-modal-accept-all">Accept All</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/cookie-consent.js"></script>
     <script src="js/trendData.js"></script>
     <script src="js/particles.js"></script>
     <script src="js/auth-gate.js"></script>

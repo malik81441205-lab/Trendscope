@@ -782,6 +782,30 @@ img{max-width:100%;display:block}
     transition: filter 0.4s ease, opacity 0.4s ease;
 }
 
+/* Verification Panel Styles */
+.ag-verify-text {
+    color: var(--text2);
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+}
+#ag-verify-code {
+    text-align: center;
+    font-size: 24px !important;
+    letter-spacing: 8px;
+    font-weight: 700;
+    color: var(--green) !important;
+    border-color: rgba(74, 222, 128, 0.2);
+}
+#ag-verify-code::placeholder {
+    letter-spacing: normal;
+}
+.ag-resend-container {
+    text-align: center;
+    margin-top: 16px;
+}
+
 /* â•â•â• AUTH GATE RESPONSIVE â•â•â• */
 @media (max-width: 768px) {
     .auth-gate-overlay { padding: 12px; align-items: flex-end; }

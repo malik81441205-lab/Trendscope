@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — Vid Voyage World</title>
+    <title>Admin Dashboard — TrendScope</title>
     <link rel="stylesheet" href="css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Cpath d='M6 22 L12 14 L18 18 L26 8' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M22 8 L26 8 L26 12' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
@@ -24,7 +24,7 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
         <div class="admin-brand">
-            Vid Voyage <span class="badge badge-admin" style="margin-left: 8px;">ADMIN</span>
+            TrendScope <span class="badge badge-admin" style="margin-left: 8px;">ADMIN</span>
         </div>
         <nav class="admin-nav" id="admin-nav">
             <a class="admin-nav-item active" data-target="overview">
@@ -278,6 +278,35 @@
         </div>
     </main>
 </div>
+
+<!-- Auth Guard: redirect to login if no admin session -->
+<script>
+(function() {
+    const admin = localStorage.getItem('admin');
+    if (!admin) {
+        window.location.href = 'admin-login.html';
+        return;
+    }
+    try {
+        const adminData = JSON.parse(admin);
+        if (!adminData || adminData.role !== 'admin') {
+            localStorage.removeItem('admin');
+            window.location.href = 'admin-login.html';
+            return;
+        }
+        // Set admin name and initial in header
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameEl = document.getElementById('admin-name');
+            const initialEl = document.getElementById('admin-initial');
+            if (nameEl && adminData.full_name) nameEl.textContent = adminData.full_name;
+            if (initialEl && adminData.full_name) initialEl.textContent = adminData.full_name.charAt(0).toUpperCase();
+        });
+    } catch(e) {
+        localStorage.removeItem('admin');
+        window.location.href = 'admin-login.html';
+    }
+})();
+</script>
 
 <!-- Main Admin JS -->
 <script src="js/admin.js"></script>

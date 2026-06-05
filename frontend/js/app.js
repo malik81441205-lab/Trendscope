@@ -1,4 +1,8 @@
 // TrendScope Dashboard App
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+    ? 'http://localhost:5000'
+    : window.location.origin;
+
 const allCategories=["All","Music","Gaming","Entertainment","Sports","Education","Tech","Food","Travel","News","Comedy","How-to","Vlogs"];
 const countries=[{code:"US",name:"United States",flag:"🇺🇸"},{code:"GB",name:"United Kingdom",flag:"🇬🇧"},{code:"IN",name:"India",flag:"🇮🇳"},{code:"JP",name:"Japan",flag:"🇯🇵"},{code:"BR",name:"Brazil",flag:"🇧🇷"},{code:"DE",name:"Germany",flag:"🇩🇪"},{code:"FR",name:"France",flag:"🇫🇷"},{code:"KR",name:"South Korea",flag:"🇰🇷"}];
 const growthTips=[{country:"United States",flag:"🇺🇸",tips:["Post between 2-4 PM EST for maximum reach","Use trending hashtags within first 60 mins","Collaborate with US-based creators for algorithm boost","Shorts under 30s get 2x more impressions"],bestCategories:["Entertainment","Tech","How-to"],peakHours:"2 PM - 4 PM EST",avgCPM:"$6 - $12",audienceAge:"18-34 (62%)"},{country:"United Kingdom",flag:"🇬🇧",tips:["British humor & dry wit performs best","Football content peaks during Premier League","Post at 6-8 PM GMT for evening viewers","Documentary-style content has 40% higher retention"],bestCategories:["Sports","Comedy","Education"],peakHours:"6 PM - 8 PM GMT",avgCPM:"$5 - $10",audienceAge:"25-44 (55%)"},{country:"India",flag:"🇮🇳",tips:["Hindi + English mix titles get 3x clicks","Mobile-first thumbnails are critical (95% mobile)","Cricket & Bollywood content trends massively","Post at 7-9 PM IST for prime time"],bestCategories:["Music","Entertainment","Comedy"],peakHours:"7 PM - 9 PM IST",avgCPM:"$0.50 - $2",audienceAge:"18-24 (48%)"},{country:"Japan",flag:"🇯🇵",tips:["Anime & gaming content dominates trending","Polished editing expected - quality over quantity","Japanese-only titles perform 5x better","ASMR & satisfying content has huge audience"],bestCategories:["Gaming","Entertainment","Tech"],peakHours:"8 PM - 11 PM JST",avgCPM:"$4 - $8",audienceAge:"18-34 (58%)"},{country:"Brazil",flag:"🇧🇷",tips:["Portuguese-only - English content barely trends","Music & football are guaranteed viral categories","Energetic, loud presentation style works best","Carnival season = 10x normal engagement"],bestCategories:["Music","Sports","Vlogs"],peakHours:"7 PM - 10 PM BRT",avgCPM:"$1 - $4",audienceAge:"18-34 (65%)"},{country:"Germany",flag:"🇩🇪",tips:["Educational & factual content valued highly","German-language essential for trending tab","Automotive content has dedicated audience","Structured, well-researched videos perform best"],bestCategories:["Education","Tech","News"],peakHours:"6 PM - 9 PM CET",avgCPM:"$5 - $10",audienceAge:"25-44 (52%)"},{country:"France",flag:"🇫🇷",tips:["French-language is mandatory for trending","Fashion, food & lifestyle dominate","Cinematic B-roll increases watch time 30%","Commentary & reaction videos growing fast"],bestCategories:["Entertainment","Food","Vlogs"],peakHours:"7 PM - 10 PM CET",avgCPM:"$4 - $8",audienceAge:"18-34 (60%)"},{country:"South Korea",flag:"🇰🇷",tips:["K-pop fan content gets massive organic reach","Mukbang & food content is uniquely popular","Esports & gaming have premium CPM rates","Aegyo & cute aesthetics boost CTR significantly"],bestCategories:["Music","Gaming","Food"],peakHours:"9 PM - 12 AM KST",avgCPM:"$3 - $7",audienceAge:"18-34 (63%)"}];
@@ -290,7 +294,7 @@ async function fetchData(code, retries = 3){
         let success = false;
         for (let i = 0; i < retries; i++) {
             try {
-                const r = await fetch(`https://trendscope-production-3708.up.railway.app/api/trends?country=${code}`);
+                const r = await fetch(`${API_BASE}/api/trends?country=${code}`);
                 if (!r.ok) throw new Error('API Error');
                 videos = await r.json();
                 isLive = true;
@@ -759,8 +763,8 @@ async function refreshHistorySection() {
 
     try {
         const [historyRes, compareRes] = await Promise.all([
-            AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/trends/history?region=${region}&days=${selectedHistoryDays}`),
-            AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/trends/compare?region=${region}`)
+            AuthGate.authFetch(`/api/trends/history?region=${region}&days=${selectedHistoryDays}`),
+            AuthGate.authFetch(`/api/trends/compare?region=${region}`)
         ]);
 
         if (historyRes.status === 401 || compareRes.status === 401) {
@@ -973,7 +977,7 @@ function loadSavedTrendIds() {
     if (!user) { currentUserId = null; savedTrendIds = new Set(); return; }
     currentUserId = user.id;
 
-    AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine/ids')
+    AuthGate.authFetch('/api/saved-trends/mine/ids')
         .then(r => { if (!r.ok) throw new Error('Auth'); return r.json(); })
         .then(ids => {
             savedTrendIds = new Set(ids);
@@ -994,11 +998,11 @@ async function toggleSaveTrend(videoId, btnEl) {
     if (isSaved) {
         // Unsave — need to find the saved_trend id first
         try {
-            const res = await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine');
+            const res = await AuthGate.authFetch('/api/saved-trends/mine');
             const saved = await res.json();
             const found = saved.find(s => s.video_youtube_id === videoId);
             if (found) {
-                await AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/saved-trends/${found.id}`, { method: 'DELETE' });
+                await AuthGate.authFetch(`/api/saved-trends/${found.id}`, { method: 'DELETE' });
                 savedTrendIds.delete(videoId);
                 btnEl.classList.remove('saved');
                 btnEl.innerHTML = ICONS.bookmark;
@@ -1012,7 +1016,7 @@ async function toggleSaveTrend(videoId, btnEl) {
         if (!video) return;
 
         try {
-            await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends', {
+            await AuthGate.authFetch('/api/saved-trends', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1061,7 +1065,7 @@ async function renderSavedTrends() {
     grid.innerHTML = Array(3).fill(0).map(() => `<div class="skeleton-card" style="height:80px"><div class="skeleton-bar w80"></div><div class="skeleton-bar w60"></div></div>`).join('');
 
     try {
-        const res = await AuthGate.authFetch('https://trendscope-production-3708.up.railway.app/api/saved-trends/mine');
+        const res = await AuthGate.authFetch('/api/saved-trends/mine');
         const savedList = await res.json();
 
         if (countEl) countEl.textContent = savedList.length + ' saved';
@@ -1100,7 +1104,7 @@ async function renderSavedTrends() {
 
 async function removeSavedTrend(id, videoYoutubeId) {
     try {
-        await AuthGate.authFetch(`https://trendscope-production-3708.up.railway.app/api/saved-trends/${id}`, { method: 'DELETE' });
+        await AuthGate.authFetch(`/api/saved-trends/${id}`, { method: 'DELETE' });
         savedTrendIds.delete(videoYoutubeId);
         showToast('Trend removed');
         renderSavedTrends();

@@ -4,9 +4,14 @@
 // ═══════════════════════════════════════════════════════════════
 
 const AuthGate = (() => {
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+        ? 'http://localhost:5000'
+        : window.location.origin;
+
     let _token = null;
     let _user = null;
     let _pendingAction = null;
+    let _verificationEmail = '';
     let _recaptchaSiteKey = '';
     let _recaptchaLoginWidgetId = null;
     let _recaptchaSignupWidgetId = null;
@@ -62,7 +67,7 @@ const AuthGate = (() => {
     function authFetch(url, opts = {}) {
         // Auto-prepend backend host for relative /api/ calls
         if (url.startsWith('/api/')) {
-            url = 'https://trendscope-production-3708.up.railway.app' + url;
+            url = API_BASE + url;
         }
         // credentials: 'include' ensures HttpOnly cookies are sent cross-origin
         opts.credentials = 'include';
@@ -88,7 +93,7 @@ const AuthGate = (() => {
         // Also try localStorage token as fallback indicator
         const hasLocalUser = !!getUser();
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/verify-token', { credentials: 'include' });
+            const res = await fetch(`${API_BASE}/api/verify-token`, { credentials: 'include' });
             if (!res.ok) { clearToken(); onUnauthenticated(); return false; }
             const data = await res.json();
             if (data.valid && data.user) { setUser(data.user); _token = localStorage.getItem('auth_token'); onAuthenticated(); return true; }
@@ -146,7 +151,7 @@ const AuthGate = (() => {
 
     async function logout() {
         // Call server to clear HttpOnly cookie
-        try { await fetch('https://trendscope-production-3708.up.railway.app/api/logout', { method: 'POST', credentials: 'include' }); } catch(e) {}
+        try { await fetch(`${API_BASE}/api/logout`, { method: 'POST', credentials: 'include' }); } catch(e) {}
         clearToken();
         onUnauthenticated();
         if (typeof window.savedTrendIds !== 'undefined') window.savedTrendIds = new Set();
@@ -187,7 +192,7 @@ const AuthGate = (() => {
     // ─── Google reCAPTCHA v2 ────────────────────────────────
     async function loadRecaptchaSiteKey() {
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/recaptcha-key');
+            const res = await fetch(`${API_BASE}/api/recaptcha-key`);
             const data = await res.json();
             _recaptchaSiteKey = data.siteKey || '';
         } catch (e) {
@@ -382,8 +387,9 @@ const AuthGate = (() => {
         btn.textContent = 'Authenticating...'; btn.disabled = true;
 
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/login', {
+            const res = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email, password, rememberMe: remember, recaptchaToken })
             });
             const data = await res.json();
@@ -395,6 +401,12 @@ const AuthGate = (() => {
                 showToastMsg('Welcome back, ' + (data.user.full_name || data.user.email) + '!');
                 if (_pendingAction) { const fn = _pendingAction; _pendingAction = null; setTimeout(fn, 300); }
                 if (typeof loadSavedTrendIds === 'function') loadSavedTrendIds();
+            } else if (data.verification_required) {
+                _verificationEmail = data.email || email;
+                switchTab('verify');
+                document.getElementById('ag-verify-email-display').textContent = _verificationEmail;
+                showError('ag-verify', data.error || 'Verification required.');
+                resetRecaptchaWidgets();
             } else {
                 showError('ag-login', data.error || 'Login failed');
                 resetRecaptchaWidgets();
@@ -488,12 +500,18 @@ const AuthGate = (() => {
         btn.textContent = 'Creating Account...'; btn.disabled = true;
 
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/signup', {
+            const res = await fetch(`${API_BASE}/api/signup`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ full_name, email, password, confirm_password: confirm, country, gender, recaptchaToken })
             });
             const data = await res.json();
-            if (res.ok && data.token) {
+            if (res.ok && data.verification_required) {
+                _verificationEmail = data.email || email;
+                switchTab('verify');
+                document.getElementById('ag-verify-email-display').textContent = _verificationEmail;
+                showSuccess('ag-verify', data.message || 'Verification code sent to your email.');
+            } else if (res.ok && data.token) {
                 setToken(data.token, false);
                 setUser(data.user);
                 onAuthenticated();
@@ -523,8 +541,9 @@ const AuthGate = (() => {
         }
 
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/forgot-password', {
+            const res = await fetch(`${API_BASE}/api/forgot-password`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email, recaptchaToken })
             });
             const data = await res.json();
@@ -536,6 +555,81 @@ const AuthGate = (() => {
             resetRecaptchaWidgets();
         } catch (e) {
             showError('ag-login', 'Connection error.');
+        }
+    }
+
+    // ─── Verification Handler ──────────────────────────────────
+    async function handleVerify(e) {
+        e.preventDefault();
+        clearFormErrors();
+        const code = document.getElementById('ag-verify-code').value.trim();
+
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+            showError('ag-verify', 'Please enter a valid 6-digit verification code.');
+            return;
+        }
+
+        const btn = document.getElementById('ag-verify-btn');
+        btn.textContent = 'Verifying...'; btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/verify-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email: _verificationEmail, code })
+            });
+            const data = await res.json();
+            if (res.ok && data.token) {
+                setToken(data.token, false);
+                setUser(data.user);
+                onAuthenticated();
+                hideModal();
+                showToastMsg('Account verified! Welcome to TrendScope. 🎉');
+                if (_pendingAction) { const fn = _pendingAction; _pendingAction = null; setTimeout(fn, 300); }
+                if (typeof loadSavedTrendIds === 'function') loadSavedTrendIds();
+            } else {
+                showError('ag-verify', data.error || 'Verification failed. Please check the code.');
+            }
+        } catch (err) {
+            showError('ag-verify', 'Connection error. Please try again.');
+        } finally {
+            btn.textContent = 'Verify Account'; btn.disabled = false;
+        }
+    }
+
+    async function handleResendCode(e) {
+        e.preventDefault();
+        clearFormErrors();
+
+        if (!_verificationEmail) {
+            showError('ag-verify', 'Unable to determine email. Please reload and try again.');
+            return;
+        }
+
+        const link = document.getElementById('ag-resend-code');
+        link.textContent = 'Sending...';
+        link.style.pointerEvents = 'none';
+
+        try {
+            const res = await fetch(`${API_BASE}/api/resend-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email: _verificationEmail })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showSuccess('ag-verify', data.message || 'Verification code resent.');
+                document.getElementById('ag-verify-code').value = '';
+            } else {
+                showError('ag-verify', data.error || 'Resend failed. Please try again.');
+            }
+        } catch (err) {
+            showError('ag-verify', 'Connection error.');
+        } finally {
+            link.textContent = 'Resend Code';
+            link.style.pointerEvents = 'auto';
         }
     }
 
@@ -551,8 +645,14 @@ const AuthGate = (() => {
         // Form submissions
         const loginForm = document.getElementById('ag-login-form');
         const signupForm = document.getElementById('ag-signup-form');
+        const verifyForm = document.getElementById('ag-verify-form');
         if (loginForm) loginForm.addEventListener('submit', handleLogin);
         if (signupForm) signupForm.addEventListener('submit', handleSignup);
+        if (verifyForm) verifyForm.addEventListener('submit', handleVerify);
+
+        const resendLink = document.getElementById('ag-resend-code');
+        if (resendLink) resendLink.addEventListener('click', handleResendCode);
+
         // Close modal
         const closeBtn = document.getElementById('ag-close-btn');
         if (closeBtn) closeBtn.addEventListener('click', hideModal);
@@ -580,9 +680,10 @@ const AuthGate = (() => {
     async function handleGoogleLogin(response) {
         clearFormErrors();
         try {
-            const res = await fetch('https://trendscope-production-3708.up.railway.app/api/google-login', {
+            const res = await fetch(`${API_BASE}/api/google-login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ googleToken: response.credential })
             });
             const data = await res.json();

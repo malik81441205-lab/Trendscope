@@ -73,7 +73,7 @@ async function start() {
             const adminHash = await bcrypt.hash("admin123", 10);
 
             await pool.execute(
-                "INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (email, password_hash, full_name, role, is_verified) VALUES (?, ?, ?, ?, 1)",
                 ["admin@trendscope.com", adminHash, "System Admin", "admin"]
             );
 

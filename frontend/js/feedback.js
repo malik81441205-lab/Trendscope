@@ -1,4 +1,8 @@
 // ─── Feedback System ──────────────────────────────────────────────────
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+    ? 'http://localhost:5000'
+    : window.location.origin;
+
 let selectedRating = 0;
 
 function toggleFeedbackModal() {
@@ -59,7 +63,7 @@ async function submitFeedback(event) {
     msgEl.textContent = '';
 
     try {
-        const response = await fetch('https://trendscope-production-3708.up.railway.app/api/feedback', {
+        const response = await fetch(`${API_BASE}/api/feedback`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -126,7 +130,7 @@ async function loadPublicTestimonials() {
     if (!container) return; // Not on a page with testimonials
 
     try {
-        const res = await fetch('https://trendscope-production-3708.up.railway.app/api/public-feedback');
+        const res = await fetch(`${API_BASE}/api/public-feedback`);
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.error || 'Failed to load testimonials');

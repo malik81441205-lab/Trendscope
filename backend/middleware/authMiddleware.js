@@ -9,10 +9,11 @@ const COOKIE_NAME = "vvw_auth_token";
  * Cookie options for secure JWT storage
  */
 function getCookieOptions(rememberMe = false) {
+    const isProduction = process.env.NODE_ENV === "production";
     return {
         httpOnly: true,       // Not accessible via JavaScript — prevents XSS token theft
-        secure: process.env.NODE_ENV === "production",  // HTTPS only in production
-        sameSite: "strict",   // Prevents CSRF
+        secure: isProduction,  // HTTPS only in production
+        sameSite: isProduction ? "none" : "lax",   // 'none' required for cross-origin in production
         path: "/",
         maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000  // 30 days or 24 hours
     };

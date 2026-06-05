@@ -3,6 +3,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { getPool } = require("../config/database");
 const { generateToken, setAuthCookie, clearAuthCookie } = require("../middleware/authMiddleware");
 const { validateUsername, validateEmail, VALID_COUNTRIES, VALID_GENDERS } = require("../middleware/securityMiddleware");
+const { sendVerificationCodeEmail } = require("../services/emailService");
 
 // In production, this client ID should come from .env
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
@@ -36,14 +37,19 @@ const authController = {
                 if (!user.google_id) {
                     await pool.execute("UPDATE users SET google_id = ? WHERE id = ?", [google_id, user.id]);
                 }
+                // Auto verify if logging in via Google
+                if (!user.is_verified) {
+                    await pool.execute("UPDATE users SET is_verified = 1 WHERE id = ?", [user.id]);
+                    user.is_verified = 1;
+                }
                 await pool.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
             } else {
                 // Create new user for this Google account
                 const [result] = await pool.execute(
-                    "INSERT INTO users (email, password_hash, full_name, google_id) VALUES (?, NULL, ?, ?)",
+                    "INSERT INTO users (email, password_hash, full_name, google_id, is_verified) VALUES (?, NULL, ?, ?, 1)",
                     [email, full_name, google_id]
                 );
-                user = { id: result.insertId, email, role: "user", full_name };
+                user = { id: result.insertId, email, role: "user", full_name, is_verified: 1 };
             }
 
             const token = generateToken(user, true); // True for rememberMe since it's Google
@@ -103,21 +109,23 @@ const authController = {
         }
 
         const password_hash = await bcrypt.hash(password, 10);
+        
+        // Generate a 6-digit verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
         const [result] = await pool.execute(
-            "INSERT INTO users (email, password_hash, full_name, country, gender) VALUES (?, ?, ?, ?, ?)",
-            [emailCheck.email, password_hash, nameCheck.name, country || null, gender || null]
+            "INSERT INTO users (email, password_hash, full_name, country, gender, is_verified, verification_code, verification_code_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+            [emailCheck.email, password_hash, nameCheck.name, country || null, gender || null, verificationCode, codeExpiry]
         );
 
-        const user = { id: result.insertId, email: emailCheck.email, role: "user", full_name: nameCheck.name };
-        const token = generateToken(user, false);
-
-        // Set HttpOnly cookie
-        setAuthCookie(res, token, false);
+        // Send email
+        await sendVerificationCodeEmail(emailCheck.email, verificationCode);
 
         res.status(201).json({
-            message: "Account created successfully!",
-            token,
-            user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
+            message: "Verification code sent. Please check your email to complete registration.",
+            verification_required: true,
+            email: emailCheck.email
         });
     },
 
@@ -140,6 +148,24 @@ const authController = {
 
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) return res.status(401).json({ error: "Invalid credentials" });
+
+        // Check if verified
+        if (!user.is_verified) {
+            // Automatically resend a code for convenience
+            const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const codeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+            await pool.execute(
+                "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
+                [newCode, codeExpiry, user.id]
+            );
+            await sendVerificationCodeEmail(user.email, newCode);
+
+            return res.status(403).json({
+                error: "Your email address is not verified. A verification code has been sent to your email.",
+                verification_required: true,
+                email: user.email
+            });
+        }
 
         await pool.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
 
@@ -213,6 +239,84 @@ const authController = {
             message: "Admin login successful",
             token,
             admin: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
+        });
+    },
+
+    // Verify Email Code
+    async verifyEmail(req, res) {
+        const { email, code } = req.body;
+        if (!email || !code) {
+            return res.status(400).json({ error: "Email and verification code are required." });
+        }
+
+        const pool = getPool();
+        const [users] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+        if (users.length === 0) {
+            return res.status(404).json({ error: "User account not found." });
+        }
+
+        const user = users[0];
+        if (user.is_verified) {
+            return res.status(400).json({ error: "Email address is already verified." });
+        }
+
+        if (user.verification_code !== code) {
+            return res.status(400).json({ error: "Invalid verification code." });
+        }
+
+        const expiryDate = new Date(user.verification_code_expires);
+        if (expiryDate < new Date()) {
+            return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+        }
+
+        // Update user to verified
+        await pool.execute(
+            "UPDATE users SET is_verified = 1, verification_code = NULL, verification_code_expires = NULL WHERE id = ?",
+            [user.id]
+        );
+
+        // Track role and details
+        const updatedUser = { id: user.id, email: user.email, role: user.role || 'user', full_name: user.full_name };
+        const token = generateToken(updatedUser, false);
+        setAuthCookie(res, token, false);
+
+        res.json({
+            message: "Email verification successful! Welcome to TrendScope.",
+            token,
+            user: updatedUser
+        });
+    },
+
+    // Resend Verification Code
+    async resendCode(req, res) {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: "Email is required." });
+        }
+
+        const pool = getPool();
+        const [users] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+        if (users.length === 0) {
+            return res.status(404).json({ error: "User account not found." });
+        }
+
+        const user = users[0];
+        if (user.is_verified) {
+            return res.status(400).json({ error: "Email address is already verified." });
+        }
+
+        const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        await pool.execute(
+            "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
+            [newCode, codeExpiry, user.id]
+        );
+
+        await sendVerificationCodeEmail(email, newCode);
+
+        res.json({
+            message: "A new verification code has been sent to your email."
         });
     },
 

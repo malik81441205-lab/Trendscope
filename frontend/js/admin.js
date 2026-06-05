@@ -1,5 +1,9 @@
 // ─── ADMIN DASHBOARD LOGIC ───────────────────────────────────────────────
 
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+    ? 'http://localhost:5000'
+    : window.location.origin;
+
 let charts = {};
 let usersList = [];
 
@@ -72,8 +76,9 @@ function setupTabs() {
 function setupLogout() {
     document.getElementById("logout-btn").addEventListener("click", async () => {
         try {
-            await fetch("https://trendscope-production-3708.up.railway.app/api/logout", { method: "POST", credentials: "include" });
+            await fetch(`${API_BASE}/api/logout`, { method: "POST", credentials: "include" });
             localStorage.removeItem("admin");
+            localStorage.removeItem("adminToken");
             window.location.href = "admin-login.html";
         } catch(e) {
             console.error(e);
@@ -84,7 +89,7 @@ function setupLogout() {
 // ─── API HELPERS ───
 async function fetchAdmin(endpoint, options = {}) {
     options.credentials = 'include';
-    const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/${endpoint}`, options);
+    const res = await fetch(`${API_BASE}/api/admin/${endpoint}`, options);
     if (res.status === 401 || res.status === 403) {
         window.location.href = "admin-login.html";
         throw new Error("Unauthorized");
@@ -405,7 +410,7 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
 // ─── FEEDBACK TAB ───
 async function loadFeedback() {
     try {
-        const res = await fetch("https://trendscope-production-3708.up.railway.app/api/feedback", {
+        const res = await fetch(`${API_BASE}/api/feedback`, {
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}`
             },
@@ -473,7 +478,11 @@ function renderFeedbackTable(feedbacks) {
 // Feedback Admin Actions
 async function adminFeedbackAction(id, endpoint, method = 'PUT') {
     try {
-        const res = await fetch(`https://trendscope-production-3708.up.railway.app/api/admin/feedback/${endpoint}/${id}`, {
+        // Build URL: if endpoint is empty, just use /api/admin/feedback/:id
+        const url = endpoint 
+            ? `${API_BASE}/api/admin/feedback/${endpoint}/${id}`
+            : `${API_BASE}/api/admin/feedback/${id}`;
+        const res = await fetch(url, {
             method,
             headers: { "Authorization": `Bearer ${localStorage.getItem('adminToken') || ''}` },
             credentials: 'include'
@@ -502,6 +511,6 @@ function toggleFeedbackVisibility(id) {
 
 function deleteFeedback(id) {
     if (confirm("Are you sure you want to permanently delete this feedback?")) {
-        adminFeedbackAction(id, '', 'DELETE'); // Route is /api/admin/feedback/:id
+        adminFeedbackAction(id, '', 'DELETE');
     }
 }

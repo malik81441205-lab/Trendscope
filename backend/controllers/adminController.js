@@ -161,8 +161,12 @@ const adminController = {
     async deleteTrend(req, res) {
         const { id } = req.params;
         const db = getPool();
+        // Get youtube_id BEFORE deleting the video row
+        const [rows] = await db.execute("SELECT youtube_id FROM videos WHERE id = ?", [id]);
+        if (rows.length > 0) {
+            await db.execute("DELETE FROM trend_history WHERE video_youtube_id = ?", [rows[0].youtube_id]);
+        }
         await db.execute("DELETE FROM videos WHERE id = ?", [id]);
-        await db.execute("DELETE FROM trend_history WHERE video_youtube_id = (SELECT youtube_id FROM videos WHERE id = ?)", [id]);
         await db.execute("INSERT INTO system_logs (event_type, message, user_id) VALUES (?, ?, ?)", ['content_delete', `Trend ID ${id} deleted`, req.user.id]);
         res.json({ message: "Trend deleted successfully" });
     }
