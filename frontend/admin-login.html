@@ -591,6 +591,7 @@
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script>
         // Mouse Reactive Card Glow
         const card = document.getElementById('card');
@@ -677,9 +678,6 @@
         }
 
         // Login Submit
-        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
-            ? 'http://localhost:5000'
-            : window.location.origin;
 
         document.getElementById("admin-login-form").addEventListener("submit", async (e) => {
             e.preventDefault();

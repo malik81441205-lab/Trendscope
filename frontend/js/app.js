@@ -1,7 +1,5 @@
 // TrendScope Dashboard App
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
-    ? 'http://localhost:5000'
-    : window.location.origin;
+
 
 const allCategories=["All","Music","Gaming","Entertainment","Sports","Education","Tech","Food","Travel","News","Comedy","How-to","Vlogs"];
 const countries=[{code:"US",name:"United States",flag:"🇺🇸"},{code:"GB",name:"United Kingdom",flag:"🇬🇧"},{code:"IN",name:"India",flag:"🇮🇳"},{code:"JP",name:"Japan",flag:"🇯🇵"},{code:"BR",name:"Brazil",flag:"🇧🇷"},{code:"DE",name:"Germany",flag:"🇩🇪"},{code:"FR",name:"France",flag:"🇫🇷"},{code:"KR",name:"South Korea",flag:"🇰🇷"}];

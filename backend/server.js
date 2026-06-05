@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 const cron = require("node-cron");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const { initDatabase, getPool } = require("./config/database");
 const { errorMiddleware } = require("./middleware/errorHandler");
@@ -49,8 +49,9 @@ app.use(errorMiddleware);
 
 // ─── Root Route ─────────────────────────────────────────────
 app.get("/", (req, res) => {
-    res.send("TrendScope Backend Running");
+    res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
 });
+
 
 // ─── Fallback — serve frontend ──────────────────────────────
 app.get("*", (req, res) => {
