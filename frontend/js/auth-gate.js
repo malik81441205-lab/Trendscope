@@ -119,11 +119,11 @@ const AuthGate = (() => {
         
         if (ud && u) {
             const displayName = u.full_name || u.email;
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff&size=64&bold=true`;
+            const avatarUrl = u.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff&size=64&bold=true`;
             
             ud.innerHTML = `
                 <div class="user-profile" title="Click to logout">
-                    <img src="${avatarUrl}" alt="Avatar">
+                    <img src="${avatarUrl}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff&size=64&bold=true'">
                     <div class="user-details">
                         <span class="user-name">${displayName}</span>
                         <span class="user-logout">Logout</span>

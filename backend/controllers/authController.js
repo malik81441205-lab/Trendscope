@@ -4,13 +4,37 @@ const { getPool } = require("../config/database");
 const { generateToken, setAuthCookie, clearAuthCookie } = require("../middleware/authMiddleware");
 const { validateUsername, validateEmail, VALID_COUNTRIES, VALID_GENDERS } = require("../middleware/securityMiddleware");
 const { sendVerificationCodeEmail } = require("../services/emailService");
+const { isDisposableEmail } = require("../utils/disposableEmailBlocker");
 
 // In production, this client ID should come from .env
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "221163940818-dppku5etbk06uvkbrfbs19psbsud5r57.apps.googleusercontent.com";
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+// In-memory rate limiting per email for signup (max 5 signup attempts per email per hour)
+const emailSignupAttempts = new Map();
+
+function isEmailRateLimited(email) {
+    const now = Date.now();
+    const windowMs = 60 * 60 * 1000; // 1 hour
+    const maxAttempts = 5;
+    
+    if (!emailSignupAttempts.has(email)) {
+        emailSignupAttempts.set(email, []);
+    }
+    
+    const attempts = emailSignupAttempts.get(email).filter(ts => now - ts < windowMs);
+    emailSignupAttempts.set(email, attempts);
+    
+    if (attempts.length >= maxAttempts) {
+        return true;
+    }
+    
+    attempts.push(now);
+    return false;
+}
+
 const authController = {
-    // Google OAuth Login
+    // Google OAuth Login / Auto-signup
     async googleLogin(req, res) {
         const { googleToken } = req.body;
         if (!googleToken) {
@@ -26,6 +50,7 @@ const authController = {
             const email = payload['email'];
             const full_name = payload['name'] || email.split('@')[0];
             const google_id = payload['sub'];
+            const picture = payload['picture'] || null;
 
             const pool = getPool();
             const [users] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
@@ -33,23 +58,24 @@ const authController = {
 
             if (users.length > 0) {
                 user = users[0];
-                // Link google_id if not linked
-                if (!user.google_id) {
-                    await pool.execute("UPDATE users SET google_id = ? WHERE id = ?", [google_id, user.id]);
-                }
-                // Auto verify if logging in via Google
-                if (!user.is_verified) {
-                    await pool.execute("UPDATE users SET is_verified = 1 WHERE id = ?", [user.id]);
-                    user.is_verified = 1;
-                }
+                // Link google_id and update profile picture if needed
+                await pool.execute(
+                    "UPDATE users SET google_id = ?, is_verified = 1, email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP), auth_provider = 'google', profile_picture = COALESCE(profile_picture, ?) WHERE id = ?",
+                    [google_id, picture, user.id]
+                );
+                user.google_id = google_id;
+                user.is_verified = 1;
+                user.auth_provider = 'google';
+                user.profile_picture = user.profile_picture || picture;
+                
                 await pool.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
             } else {
                 // Create new user for this Google account
                 const [result] = await pool.execute(
-                    "INSERT INTO users (email, password_hash, full_name, google_id, is_verified) VALUES (?, NULL, ?, ?, 1)",
-                    [email, full_name, google_id]
+                    "INSERT INTO users (email, password_hash, full_name, google_id, is_verified, auth_provider, email_verified_at, profile_picture) VALUES (?, NULL, ?, ?, 1, 'google', CURRENT_TIMESTAMP, ?)",
+                    [email, full_name, google_id, picture]
                 );
-                user = { id: result.insertId, email, role: "user", full_name, is_verified: 1 };
+                user = { id: result.insertId, email, role: "user", full_name, is_verified: 1, auth_provider: 'google', profile_picture: picture };
             }
 
             const token = generateToken(user, true); // True for rememberMe since it's Google
@@ -58,7 +84,7 @@ const authController = {
             res.json({
                 message: "Google Login successful",
                 token,
-                user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
+                user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, profile_picture: user.profile_picture }
             });
         } catch (error) {
             console.error("Google Auth Error:", error);
@@ -85,6 +111,16 @@ const authController = {
             return res.status(400).json({ error: emailCheck.error });
         }
 
+        // Anti-Fake Email Protection: Disposable Email check
+        if (isDisposableEmail(emailCheck.email)) {
+            return res.status(400).json({ error: "Disposable email addresses are not allowed." });
+        }
+
+        // Signup Rate Limiting: Per-Email check
+        if (isEmailRateLimited(emailCheck.email)) {
+            return res.status(429).json({ error: "Too many signup attempts for this email. Please try again in an hour." });
+        }
+
         if (confirm_password && password !== confirm_password) {
             return res.status(400).json({ error: "Passwords do not match." });
         }
@@ -103,24 +139,46 @@ const authController = {
         }
 
         const pool = getPool();
-        const [existing] = await pool.execute("SELECT id FROM users WHERE email = ?", [emailCheck.email]);
+        const [existing] = await pool.execute("SELECT * FROM users WHERE email = ?", [emailCheck.email]);
+        let userId;
+
         if (existing.length > 0) {
-            return res.status(409).json({ error: "An account with this email already exists." });
+            const existingUser = existing[0];
+            if (existingUser.is_verified) {
+                return res.status(409).json({ error: "An account with this email already exists." });
+            }
+            
+            // Allow update of registration details for unverified accounts
+            const password_hash = await bcrypt.hash(password, 10);
+            await pool.execute(
+                "UPDATE users SET password_hash = ?, full_name = ?, country = ?, gender = ?, auth_provider = 'local', is_verified = 0, email_verified_at = NULL WHERE id = ?",
+                [password_hash, nameCheck.name, country || null, gender || null, existingUser.id]
+            );
+            userId = existingUser.id;
+        } else {
+            const password_hash = await bcrypt.hash(password, 10);
+            const [result] = await pool.execute(
+                "INSERT INTO users (email, password_hash, full_name, country, gender, is_verified, auth_provider) VALUES (?, ?, ?, ?, ?, 0, 'local')",
+                [emailCheck.email, password_hash, nameCheck.name, country || null, gender || null]
+            );
+            userId = result.insertId;
         }
 
-        const password_hash = await bcrypt.hash(password, 10);
-        
-        // Generate a 6-digit verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+        // Generate secure 6-digit OTP code
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
-        const [result] = await pool.execute(
-            "INSERT INTO users (email, password_hash, full_name, country, gender, is_verified, verification_code, verification_code_expires) VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
-            [emailCheck.email, password_hash, nameCheck.name, country || null, gender || null, verificationCode, codeExpiry]
+        // Hash OTP before saving
+        const hashedOtp = await bcrypt.hash(otpCode, 10);
+
+        // Save hashed OTP securely in the otps table
+        await pool.execute(
+            "INSERT INTO otps (user_id, otp_code, expires_at, attempts) VALUES (?, ?, ?, 0)",
+            [userId, hashedOtp, otpExpiry]
         );
 
-        // Send email
-        await sendVerificationCodeEmail(emailCheck.email, verificationCode);
+        // Send Email
+        await sendVerificationCodeEmail(emailCheck.email, otpCode);
 
         res.status(201).json({
             message: "Verification code sent. Please check your email to complete registration.",
@@ -153,11 +211,14 @@ const authController = {
         if (!user.is_verified) {
             // Automatically resend a code for convenience
             const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const codeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+            const codeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+            const hashedOtp = await bcrypt.hash(newCode, 10);
             await pool.execute(
-                "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
-                [newCode, codeExpiry, user.id]
+                "INSERT INTO otps (user_id, otp_code, expires_at, attempts) VALUES (?, ?, ?, 0)",
+                [user.id, hashedOtp, codeExpiry]
             );
+
             await sendVerificationCodeEmail(user.email, newCode);
 
             return res.status(403).json({
@@ -177,7 +238,7 @@ const authController = {
         res.json({
             message: "Login successful",
             token,
-            user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
+            user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, profile_picture: user.profile_picture }
         });
     },
 
@@ -191,7 +252,7 @@ const authController = {
     async verifyToken(req, res) {
         const pool = getPool();
         const [users] = await pool.execute(
-            "SELECT id, email, full_name, role FROM users WHERE id = ?",
+            "SELECT id, email, full_name, role, profile_picture FROM users WHERE id = ?",
             [req.user.id]
         );
         if (users.length === 0) {
@@ -201,11 +262,11 @@ const authController = {
         const user = users[0];
         res.json({
             valid: true,
-            user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name }
+            user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, profile_picture: user.profile_picture }
         });
     },
 
-    // Forgot Password (Mock)
+    // Forgot Password
     async forgotPassword(req, res) {
         const { email } = req.body;
         const pool = getPool();
@@ -242,7 +303,7 @@ const authController = {
         });
     },
 
-    // Verify Email Code
+    // Verify OTP Code
     async verifyEmail(req, res) {
         const { email, code } = req.body;
         if (!email || !code) {
@@ -260,23 +321,54 @@ const authController = {
             return res.status(400).json({ error: "Email address is already verified." });
         }
 
-        if (user.verification_code !== code) {
-            return res.status(400).json({ error: "Invalid verification code." });
+        // Fetch latest OTP record for this user
+        const [otps] = await pool.execute(
+            "SELECT * FROM otps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+            [user.id]
+        );
+
+        if (otps.length === 0) {
+            return res.status(400).json({ error: "No verification code has been sent. Please register or request a new code." });
         }
 
-        const expiryDate = new Date(user.verification_code_expires);
+        const otpRecord = otps[0];
+
+        // Check if attempts exceeded (max 5 verification attempts)
+        if (otpRecord.attempts >= 5) {
+            return res.status(400).json({ error: "Too many incorrect attempts. This code is now invalid. Please request a new code." });
+        }
+
+        // Check expiry (10 minutes)
+        const expiryDate = new Date(otpRecord.expires_at);
         if (expiryDate < new Date()) {
             return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
         }
 
+        // Verify OTP code hash
+        const isMatch = await bcrypt.compare(code, otpRecord.otp_code);
+        if (!isMatch) {
+            const newAttempts = otpRecord.attempts + 1;
+            await pool.execute("UPDATE otps SET attempts = ? WHERE id = ?", [newAttempts, otpRecord.id]);
+            
+            if (newAttempts >= 5) {
+                return res.status(400).json({ error: "Too many incorrect attempts. This code is now invalid. Please request a new code." });
+            }
+            
+            return res.status(400).json({
+                error: `Invalid verification code. You have ${5 - newAttempts} attempts remaining.`
+            });
+        }
+
         // Update user to verified
         await pool.execute(
-            "UPDATE users SET is_verified = 1, verification_code = NULL, verification_code_expires = NULL WHERE id = ?",
+            "UPDATE users SET is_verified = 1, email_verified_at = CURRENT_TIMESTAMP WHERE id = ?",
             [user.id]
         );
 
-        // Track role and details
-        const updatedUser = { id: user.id, email: user.email, role: user.role || 'user', full_name: user.full_name };
+        // Delete successful OTP
+        await pool.execute("DELETE FROM otps WHERE user_id = ?", [user.id]);
+
+        const updatedUser = { id: user.id, email: user.email, role: user.role || 'user', full_name: user.full_name, profile_picture: user.profile_picture };
         const token = generateToken(updatedUser, false);
         setAuthCookie(res, token, false);
 
@@ -287,7 +379,7 @@ const authController = {
         });
     },
 
-    // Resend Verification Code
+    // Resend Verification OTP
     async resendCode(req, res) {
         const { email } = req.body;
         if (!email) {
@@ -305,12 +397,30 @@ const authController = {
             return res.status(400).json({ error: "Email address is already verified." });
         }
 
-        const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+        // Enforce 60-second cooldown period since last OTP creation
+        const [lastOtps] = await pool.execute(
+            "SELECT created_at FROM otps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+            [user.id]
+        );
 
+        if (lastOtps.length > 0) {
+            const lastCreated = new Date(lastOtps[0].created_at).getTime();
+            const elapsed = Date.now() - lastCreated;
+            if (elapsed < 60 * 1000) {
+                const remaining = Math.ceil((60 * 1000 - elapsed) / 1000);
+                return res.status(429).json({
+                    error: `Please wait ${remaining} seconds before requesting a new code.`
+                });
+            }
+        }
+
+        const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const codeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+        const hashedOtp = await bcrypt.hash(newCode, 10);
         await pool.execute(
-            "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
-            [newCode, codeExpiry, user.id]
+            "INSERT INTO otps (user_id, otp_code, expires_at, attempts) VALUES (?, ?, ?, 0)",
+            [user.id, hashedOtp, codeExpiry]
         );
 
         await sendVerificationCodeEmail(email, newCode);
@@ -318,13 +428,6 @@ const authController = {
         res.json({
             message: "A new verification code has been sent to your email."
         });
-    },
-
-    // Get all users (admin)
-    async getUsers(req, res) {
-        const pool = getPool();
-        const [users] = await pool.execute("SELECT id, email, full_name, role, created_at FROM users");
-        res.json(users);
     }
 };
 

@@ -200,6 +200,19 @@ async function initDatabase() {
         )
     `);
 
+    // ─── OTPs table ─────────────────────────────────────────────
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS otps (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            otp_code VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            attempts INT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_otp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+
     // ─── Migration: ensure feedbacks columns exist ──────────────
     // Handles case where table was created before these columns were added
     const feedbackMigrations = [
@@ -227,7 +240,11 @@ async function initDatabase() {
         "ALTER TABLE users ADD COLUMN gender ENUM('male','female','other','prefer_not_to_say') DEFAULT NULL",
         "ALTER TABLE users ADD COLUMN is_verified TINYINT(1) DEFAULT 0",
         "ALTER TABLE users ADD COLUMN verification_code VARCHAR(6) DEFAULT NULL",
-        "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME DEFAULT NULL"
+        "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN auth_provider VARCHAR(50) DEFAULT 'local'",
+        "ALTER TABLE users ADD COLUMN email_verified_at DATETIME DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN profile_picture VARCHAR(1000) DEFAULT NULL"
     ];
     for (const sql of usersMigrations) {
         try {

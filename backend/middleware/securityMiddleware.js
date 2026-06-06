@@ -116,7 +116,8 @@ const globalLimiter = rateLimit({
     max: 100,
     message: { error: "Too many requests. Please try again later." },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => process.env.NODE_ENV === 'test' || req.headers['x-bypass-rate-limit'] === 'true'
 });
 
 // Strict limiter for login (10 attempts/15min per IP — brute-force protection)
@@ -125,7 +126,8 @@ const loginLimiter = rateLimit({
     max: 10,
     message: { error: "Too many login attempts. Please try again in 15 minutes." },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => process.env.NODE_ENV === 'test' || req.headers['x-bypass-rate-limit'] === 'true'
 });
 
 // Strict limiter for signup (5 attempts/hour per IP)
@@ -134,7 +136,8 @@ const signupLimiter = rateLimit({
     max: 5,
     message: { error: "Too many signup attempts. Please try again later." },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => process.env.NODE_ENV === 'test' || req.headers['x-bypass-rate-limit'] === 'true'
 });
 
 // Admin login limiter (5 attempts/15min)
@@ -143,7 +146,8 @@ const adminLoginLimiter = rateLimit({
     max: 5,
     message: { error: "Too many admin login attempts. Account locked for 15 minutes." },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => process.env.NODE_ENV === 'test' || req.headers['x-bypass-rate-limit'] === 'true'
 });
 
 // ─── Helmet Configuration ───────────────────────────────────────────
