@@ -740,6 +740,9 @@ function initHistorySection() {
 
     // Initialize history charts
     initHistoryCharts();
+
+    // Load initial data for the default time period
+    refreshHistorySection();
 }
 
 function showHistorySkeletons() {
@@ -783,7 +786,39 @@ async function refreshHistorySection() {
     }
 }
 
+function rebuildComparisonCards() {
+    const compGrid = document.getElementById('comparison-grid');
+    if (!compGrid) return;
+    compGrid.innerHTML = `
+        <div class="comparison-card" id="comp-growth">
+            <div class="comp-icon growth-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+            <div class="comp-label">Growth Rate</div>
+            <div class="comp-value" id="comp-growth-val">--</div>
+            <div class="comp-delta" id="comp-growth-delta">vs previous day</div>
+        </div>
+        <div class="comparison-card" id="comp-ranking">
+            <div class="comp-icon ranking-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+            <div class="comp-label">Avg Ranking</div>
+            <div class="comp-value" id="comp-ranking-val">--</div>
+            <div class="comp-delta" id="comp-ranking-delta">position change</div>
+        </div>
+        <div class="comparison-card" id="comp-movement">
+            <div class="comp-icon movement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg></div>
+            <div class="comp-label">Trend Movement</div>
+            <div class="comp-value" id="comp-movement-val">--</div>
+            <div class="comp-delta" id="comp-movement-delta">momentum</div>
+        </div>
+        <div class="comparison-card" id="comp-engagement">
+            <div class="comp-icon engage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+            <div class="comp-label">Engagement</div>
+            <div class="comp-value" id="comp-engagement-val">--</div>
+            <div class="comp-delta" id="comp-engagement-delta">rate change</div>
+        </div>
+    `;
+}
+
 function renderComparisonCards(data) {
+    rebuildComparisonCards();
     const summary = data.summary || {};
 
     // Growth card
@@ -814,7 +849,7 @@ function renderComparisonCards(data) {
     const moveDelta = document.getElementById('comp-movement-delta');
     if (moveVal) {
         const movement = summary.trend_movement || 'stable';
-        const emoji = movement === 'rising' ? '🚀' : movement === 'falling' ? '📉' : 'âž¡ï¸';
+        const emoji = movement === 'rising' ? '🚀' : movement === 'falling' ? '📉' : '➡️';
         moveVal.textContent = emoji + ' ' + movement.charAt(0).toUpperCase() + movement.slice(1);
         moveVal.className = 'comp-value ' + (movement === 'rising' ? 'positive' : movement === 'falling' ? 'negative' : '');
         const viralPct = summary.viral_change_pct || 0;
@@ -835,6 +870,7 @@ function renderComparisonCards(data) {
 }
 
 function renderComparisonCardsFallback() {
+    rebuildComparisonCards();
     // Use live video data to populate cards when API has no history yet
     if (!videos.length) return;
     const totalViews = videos.reduce((s, v) => s + v.views, 0);
@@ -1032,7 +1068,7 @@ async function toggleSaveTrend(videoId, btnEl) {
             btnEl.classList.add('saved');
             btnEl.innerHTML = ICONS.bookmarkFilled;
             btnEl.title = 'Remove from saved';
-            showToast('Trend saved! âœ¨');
+            showToast('Trend saved! ✨');
         } catch (err) { console.error('Save error:', err); }
     }
 

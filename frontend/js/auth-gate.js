@@ -668,6 +668,26 @@ const AuthGate = (() => {
             if (e.key === 'Escape') hideModal();
         });
 
+        // Password visibility toggle initialization
+        document.querySelectorAll('.ag-password-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const showIcon = btn.querySelector('.eye-icon-show');
+                const hideIcon = btn.querySelector('.eye-icon-hide');
+                
+                if (input && input.type === 'password') {
+                    input.type = 'text';
+                    if (showIcon) showIcon.style.display = 'none';
+                    if (hideIcon) hideIcon.style.display = 'block';
+                } else if (input) {
+                    input.type = 'password';
+                    if (showIcon) showIcon.style.display = 'block';
+                    if (hideIcon) hideIcon.style.display = 'none';
+                }
+            });
+        });
+
         // Load reCAPTCHA script if site key is available
         if (_recaptchaSiteKey) {
             loadRecaptchaScript();

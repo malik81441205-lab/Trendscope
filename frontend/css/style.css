@@ -1239,3 +1239,38 @@ img{max-width:100%;display:block}
     font-size: 13px;
 }
 
+/* Password Toggle Styles */
+.ag-password-wrapper {
+    position: relative;
+    width: 100%;
+}
+.ag-password-wrapper .ag-input {
+    padding-right: 44px;
+}
+.ag-password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background-color 0.2s;
+    z-index: 5;
+}
+.ag-password-toggle:hover {
+    color: var(--text);
+    background-color: var(--bg2);
+}
+.ag-password-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
