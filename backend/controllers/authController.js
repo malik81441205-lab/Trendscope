@@ -178,12 +178,22 @@ const authController = {
         );
 
         // Send Email
-        await sendVerificationCodeEmail(emailCheck.email, otpCode);
+        const emailResult = await sendVerificationCodeEmail(emailCheck.email, otpCode);
+
+        let message = "Verification code sent. Please check your email to complete registration.";
+        if (emailResult && emailResult.fallbackToConsole) {
+            if (emailResult.error) {
+                message = `Verification email failed to send: ${emailResult.error}. (Dev Mode: code is printed in the server console/debug file).`;
+            } else {
+                message = "Verification code generated in Dev Mode (check server console or scratch-otp.txt).";
+            }
+        }
 
         res.status(201).json({
-            message: "Verification code sent. Please check your email to complete registration.",
+            message,
             verification_required: true,
-            email: emailCheck.email
+            email: emailCheck.email,
+            devMode: emailResult ? emailResult.fallbackToConsole : false
         });
     },
 
@@ -219,12 +229,22 @@ const authController = {
                 [user.id, hashedOtp, codeExpiry]
             );
 
-            await sendVerificationCodeEmail(user.email, newCode);
+            const emailResult = await sendVerificationCodeEmail(user.email, newCode);
+
+            let errorMsg = "Your email address is not verified. A verification code has been sent to your email.";
+            if (emailResult && emailResult.fallbackToConsole) {
+                if (emailResult.error) {
+                    errorMsg = `Your email address is not verified. Verification email failed to send: ${emailResult.error}. (Dev Mode: check server console or scratch-otp.txt).`;
+                } else {
+                    errorMsg = "Your email address is not verified. Code generated in Dev Mode (check server console or scratch-otp.txt).";
+                }
+            }
 
             return res.status(403).json({
-                error: "Your email address is not verified. A verification code has been sent to your email.",
+                error: errorMsg,
                 verification_required: true,
-                email: user.email
+                email: user.email,
+                devMode: emailResult ? emailResult.fallbackToConsole : false
             });
         }
 
@@ -423,10 +443,20 @@ const authController = {
             [user.id, hashedOtp, codeExpiry]
         );
 
-        await sendVerificationCodeEmail(email, newCode);
+        const emailResult = await sendVerificationCodeEmail(email, newCode);
+
+        let message = "A new verification code has been sent to your email.";
+        if (emailResult && emailResult.fallbackToConsole) {
+            if (emailResult.error) {
+                message = `Verification email failed to send: ${emailResult.error}. (Dev Mode: code is printed in the server console/debug file).`;
+            } else {
+                message = "Verification code generated in Dev Mode (check server console or scratch-otp.txt).";
+            }
+        }
 
         res.json({
-            message: "A new verification code has been sent to your email."
+            message,
+            devMode: emailResult ? emailResult.fallbackToConsole : false
         });
     }
 };

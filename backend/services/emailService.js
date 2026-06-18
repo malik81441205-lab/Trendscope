@@ -3,34 +3,65 @@ require("dotenv").config();
 
 /**
  * Sends a 6-digit verification code to the user's email address
+ * @returns {Promise<{success: boolean, fallbackToConsole: boolean, error: string|null}>}
  */
 async function sendVerificationCodeEmail(email, code) {
-    try {
-        const fs = require("fs");
-        const path = require("path");
-        fs.writeFileSync(path.join(__dirname, "..", "scratch-otp.txt"), `${email}:${code}`);
-    } catch (e) {}
+    console.log(`[EmailService] Attempting to send verification code to ${email}...`);
 
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASS;
 
-    // Check if configuration is missing
-    if (!emailUser || !emailPass || emailUser === "YOUR_EMAIL_HERE" || emailPass === "YOUR_PASSWORD_HERE") {
+    console.log(`[EmailService] SMTP Configuration check - EMAIL_USER: ${emailUser ? "Configured" : "Missing"}, EMAIL_PASS: ${emailPass ? "Configured" : "Missing"}`);
+
+    const isMissingConfig = !emailUser || !emailPass || emailUser === "YOUR_EMAIL_HERE" || emailPass === "YOUR_PASSWORD_HERE";
+
+    const timestamp = new Date().toISOString();
+    
+    // Function to handle logging OTP to console and writing to scratch-otp.txt
+    const fallbackToConsoleAndFile = (isBackup = false) => {
+        try {
+            const fs = require("fs");
+            const path = require("path");
+            fs.writeFileSync(
+                path.join(__dirname, "..", "scratch-otp.txt"),
+                `${email}:${code}\nTimestamp:${timestamp}`
+            );
+            console.log(`[EmailService] Verification code successfully saved to scratch-otp.txt`);
+        } catch (e) {
+            console.error(`[EmailService] Failed to write verification code to scratch-otp.txt:`, e.message);
+        }
+
+        const label = isBackup ? "✉️  VERIFICATION CODE FOR USER (BACKUP LOG)" : "✉️  VERIFICATION CODE FOR USER";
         console.log("\n════════════════════════════════════════════════════════════════");
-        console.log(`✉️  VERIFICATION CODE FOR USER: ${email}`);
+        console.log(label);
+        console.log(`👉  USER: ${email}`);
         console.log(`👉  CODE: ${code}`);
+        console.log(`👉  TIMESTAMP: ${timestamp}`);
         console.log("════════════════════════════════════════════════════════════════\n");
-        return;
+    };
+
+    if (isMissingConfig) {
+        console.log(`[EmailService] SMTP credentials are not configured or are set to placeholder values. Falling back to Console and File.`);
+        fallbackToConsoleAndFile(false);
+        return { success: true, fallbackToConsole: true, error: null };
     }
 
     try {
+        console.log(`[EmailService] Initializing SMTP transporter with Gmail service...`);
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
                 user: emailUser,
                 pass: emailPass
-            }
+            },
+            connectionTimeout: 5000, // 5 seconds connection timeout
+            greetingTimeout: 5000,   // 5 seconds greeting timeout
+            socketTimeout: 10000     // 10 seconds socket inactivity timeout
         });
+
+        console.log(`[EmailService] Verifying SMTP transport connection...`);
+        await transporter.verify();
+        console.log(`[EmailService] SMTP transport verified successfully.`);
 
         const mailOptions = {
             from: `"TrendScope" <${emailUser}>`,
@@ -57,16 +88,17 @@ async function sendVerificationCodeEmail(email, code) {
             `
         };
 
+        console.log(`[EmailService] Sending email to ${email}...`);
         const info = await transporter.sendMail(mailOptions);
         console.log(`✉️ Email sent successfully to ${email}. Message ID: ${info.messageId}`);
+        return { success: true, fallbackToConsole: false, error: null };
     } catch (error) {
         console.error(`❌ Error sending verification email to ${email}:`, error.message);
-        // Still print code to console as backup if sending fails
-        console.log("\n════════════════════════════════════════════════════════════════");
-        console.log(`✉️  VERIFICATION CODE FOR USER (BACKUP LOG): ${email}`);
-        console.log(`👉  CODE: ${code}`);
-        console.log("════════════════════════════════════════════════════════════════\n");
+        console.log(`[EmailService] SMTP transmission failed. Falling back to Console and File.`);
+        fallbackToConsoleAndFile(true);
+        return { success: false, fallbackToConsole: true, error: error.message };
     }
 }
 
 module.exports = { sendVerificationCodeEmail };
+
