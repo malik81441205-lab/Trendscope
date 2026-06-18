@@ -112,7 +112,7 @@ The client-side works as a **Single Page Application** (SPA) located inside `fro
 3.  **`admin.html`**: The administration management panel. Restricted to system administrators only.
 
 ### JavaScript Core Scripts
-*   **`script.js`**: Contains configuration variables like `API_BASE` (currently pointing to `https://trendscope-production-3708.up.railway.app`) which points the frontend to the backend server.
+*   **`script.js`**: Contains configuration variables like `API_BASE` (currently pointing to `https://trendscope-production-7902.up.railway.app`) which points the frontend to the backend server.
 *   **`js/auth-gate.js`**: 
     *   Manages token storage (`localStorage.getItem("token")`).
     *   Intercepts standard requests using the custom helper `AuthGate.authFetch(url, options)`. It injects `Authorization: Bearer <token>` and `credentials: 'include'` to allow secure cross-origin queries to the Railway backend.
