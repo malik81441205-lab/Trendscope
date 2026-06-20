@@ -8,12 +8,15 @@ require("dotenv").config();
 async function sendVerificationCodeEmail(email, code) {
     console.log(`[EmailService] Attempting to send verification code to ${email}...`);
 
-    const emailUser = process.env.EMAIL_USER;
-    const emailPass = process.env.EMAIL_PASS;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const emailFrom = process.env.EMAIL_FROM;
 
-    console.log(`[EmailService] SMTP Configuration check - EMAIL_USER: ${emailUser ? "Configured" : "Missing"}, EMAIL_PASS: ${emailPass ? "Configured" : "Missing"}`);
+    console.log(`[EmailService] SMTP Configuration check - SMTP_HOST: ${smtpHost ? "Configured" : "Missing"}, SMTP_USER: ${smtpUser ? "Configured" : "Missing"}, SMTP_PASS: ${smtpPass ? "Configured" : "Missing"}, EMAIL_FROM: ${emailFrom ? "Configured" : "Missing"}`);
 
-    const isMissingConfig = !emailUser || !emailPass || emailUser === "YOUR_EMAIL_HERE" || emailPass === "YOUR_PASSWORD_HERE";
+    const isMissingConfig = !smtpHost || !smtpUser || !smtpPass || !emailFrom;
 
     const timestamp = new Date().toISOString();
     
@@ -41,54 +44,40 @@ async function sendVerificationCodeEmail(email, code) {
     };
 
     if (isMissingConfig) {
-        console.log(`[EmailService] SMTP credentials are not configured or are set to placeholder values. Falling back to Console and File.`);
+        console.log(`[EmailService] SMTP credentials are not configured. Falling back to Console and File.`);
         fallbackToConsoleAndFile(false);
         return { success: true, fallbackToConsole: true, error: null };
     }
 
-    const host = "smtp.gmail.com";
-    let resolvedAddress = "N/A";
-
-
     try {
-        console.log(`[EmailService] Initializing SMTP transporter...`);
+        console.log(`[EmailService] Initializing Brevo SMTP transporter...`);
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT || 587),
             secure: false,
-            family: 4,
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            },
-            connectionTimeout: 30000,
-            greetingTimeout: 30000,
-            socketTimeout: 30000
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
         });
-
-        const dns = require("dns").promises;
-
-        const ipv4Addresses = await dns.resolve4("smtp.gmail.com");
-        resolvedAddress = ipv4Addresses?.[0] || "N/A";
-        console.log("SMTP IPv4:", resolvedAddress);
 
         console.log(`[EmailService] Verifying SMTP transport connection...`);
         try {
             await transporter.verify();
             console.log(`[EmailService] SMTP transporter verify connection: SUCCESS`);
-            console.log(`- SMTP Host: ${host}`);
-            console.log(`- Resolved Address: ${resolvedAddress}`);
+            console.log(`- SMTP Host: ${smtpHost}`);
+            console.log(`- SMTP Port: ${smtpPort}`);
             console.log(`- Status: SUCCESS`);
         } catch (verifyError) {
             console.error(`[EmailService] SMTP transporter verify connection: FAILURE`);
-            console.error(`- SMTP Host: ${host}`);
-            console.error(`- Resolved Address: ${resolvedAddress}`);
+            console.error(`- SMTP Host: ${smtpHost}`);
+            console.error(`- SMTP Port: ${smtpPort}`);
             console.error(`- Error: ${verifyError.message}`);
             throw verifyError;
         }
 
         const mailOptions = {
-            from: `"TrendScope" <${emailUser}>`,
+            from: `"TrendScope" <${process.env.EMAIL_FROM}>`,
             to: email,
             subject: `${code} is your TrendScope verification code`,
             html: `
@@ -116,15 +105,13 @@ async function sendVerificationCodeEmail(email, code) {
         const info = await transporter.sendMail(mailOptions);
         console.log(`✉️ Email sent successfully to ${email}. Message ID: ${info.messageId}`);
         console.log(`[EmailService] SMTP Transmission Success Status:`);
-        console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${resolvedAddress}`);
+        console.log(`- SMTP Host: ${smtpHost}`);
         console.log(`- Success: true`);
         return { success: true, fallbackToConsole: false, error: null };
     } catch (error) {
         console.error(`❌ Error sending verification email to ${email}:`, error.message);
         console.log(`[EmailService] SMTP Transmission Failure Status:`);
-        console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${resolvedAddress}`);
+        console.log(`- SMTP Host: ${smtpHost}`);
         console.log(`- Success: false`);
         console.log(`- Failure Reason: ${error.message}`);
         console.log(`[EmailService] SMTP transmission failed. Falling back to Console and File.`);
