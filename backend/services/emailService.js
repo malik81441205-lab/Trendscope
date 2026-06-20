@@ -61,6 +61,8 @@ async function sendVerificationCodeEmail(email, code) {
             }
         });
 
+        console.log("[EmailService] Attempting direct SMTP send without verify");
+        /*
         console.log(`[EmailService] Verifying SMTP transport connection...`);
         try {
             await transporter.verify();
@@ -75,6 +77,7 @@ async function sendVerificationCodeEmail(email, code) {
             console.error(`- Error: ${verifyError.message}`);
             throw verifyError;
         }
+        */
 
         const mailOptions = {
             from: `"TrendScope" <${process.env.EMAIL_FROM}>`,
