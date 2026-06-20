@@ -47,6 +47,7 @@ async function sendVerificationCodeEmail(email, code) {
     }
 
     const host = "smtp.gmail.com";
+    let resolvedAddress = "N/A";
 
 
     try {
@@ -67,20 +68,21 @@ async function sendVerificationCodeEmail(email, code) {
 
         const dns = require("dns").promises;
 
-        const ipv4 = await dns.resolve4("smtp.gmail.com");
-        console.log("SMTP IPv4:", ipv4[0]);
+        const ipv4Addresses = await dns.resolve4("smtp.gmail.com");
+        resolvedAddress = ipv4Addresses?.[0] || "N/A";
+        console.log("SMTP IPv4:", resolvedAddress);
 
         console.log(`[EmailService] Verifying SMTP transport connection...`);
         try {
             await transporter.verify();
             console.log(`[EmailService] SMTP transporter verify connection: SUCCESS`);
             console.log(`- SMTP Host: ${host}`);
-            console.log(`- Resolved Address: ${ipv4[0]}`);
+            console.log(`- Resolved Address: ${resolvedAddress}`);
             console.log(`- Status: SUCCESS`);
         } catch (verifyError) {
             console.error(`[EmailService] SMTP transporter verify connection: FAILURE`);
             console.error(`- SMTP Host: ${host}`);
-            console.error(`- Resolved Address: ${ipv4[0]}`);
+            console.error(`- Resolved Address: ${resolvedAddress}`);
             console.error(`- Error: ${verifyError.message}`);
             throw verifyError;
         }
@@ -115,14 +117,14 @@ async function sendVerificationCodeEmail(email, code) {
         console.log(`✉️ Email sent successfully to ${email}. Message ID: ${info.messageId}`);
         console.log(`[EmailService] SMTP Transmission Success Status:`);
         console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${ipv4[0]}`);
+        console.log(`- Resolved Address: ${resolvedAddress}`);
         console.log(`- Success: true`);
         return { success: true, fallbackToConsole: false, error: null };
     } catch (error) {
         console.error(`❌ Error sending verification email to ${email}:`, error.message);
         console.log(`[EmailService] SMTP Transmission Failure Status:`);
         console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${ipv4[0]}`);
+        console.log(`- Resolved Address: ${resolvedAddress}`);
         console.log(`- Success: false`);
         console.log(`- Failure Reason: ${error.message}`);
         console.log(`[EmailService] SMTP transmission failed. Falling back to Console and File.`);
