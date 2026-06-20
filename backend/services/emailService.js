@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-const dns = require("dns");
 require("dotenv").config();
 
 /**
@@ -48,32 +47,21 @@ async function sendVerificationCodeEmail(email, code) {
     }
 
     const host = "smtp.gmail.com";
-    let resolvedAddress = "unknown";
-    try {
-        resolvedAddress = await new Promise((resolve) => {
-            dns.lookup(host, { family: 4 }, (err, address) => {
-                if (err) resolve(`Lookup failed: ${err.message}`);
-                else resolve(address);
-            });
-        });
-    } catch (dnsErr) {
-        resolvedAddress = `Error: ${dnsErr.message}`;
-    }
+    const resolvedAddress = "N/A";
 
     try {
-        console.log(`[EmailService] Initializing SMTP transporter forcing IPv4...`);
+        console.log(`[EmailService] Initializing SMTP transporter...`);
         const transporter = nodemailer.createTransport({
-            host: host,
-            port: 587,
-            secure: false,
-            family: 4,
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
             auth: {
-                user: emailUser,
-                pass: emailPass
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             },
-            connectionTimeout: 5000, // 5 seconds connection timeout
-            greetingTimeout: 5000,   // 5 seconds greeting timeout
-            socketTimeout: 10000     // 10 seconds socket inactivity timeout
+            connectionTimeout: 30000,
+            greetingTimeout: 30000,
+            socketTimeout: 30000
         });
 
         console.log(`[EmailService] Verifying SMTP transport connection...`);
