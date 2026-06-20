@@ -47,14 +47,15 @@ async function sendVerificationCodeEmail(email, code) {
     }
 
     const host = "smtp.gmail.com";
-    const resolvedAddress = "N/A";
+
 
     try {
         console.log(`[EmailService] Initializing SMTP transporter...`);
         const transporter = nodemailer.createTransport({
             host: "smtp.gmail.com",
-            port: 465,
-            secure: true,
+            port: 587,
+            secure: false,
+            family: 4,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
@@ -64,17 +65,22 @@ async function sendVerificationCodeEmail(email, code) {
             socketTimeout: 30000
         });
 
+        const dns = require("dns").promises;
+
+        const ipv4 = await dns.resolve4("smtp.gmail.com");
+        console.log("SMTP IPv4:", ipv4[0]);
+
         console.log(`[EmailService] Verifying SMTP transport connection...`);
         try {
             await transporter.verify();
             console.log(`[EmailService] SMTP transporter verify connection: SUCCESS`);
             console.log(`- SMTP Host: ${host}`);
-            console.log(`- Resolved Address: ${resolvedAddress}`);
+            console.log(`- Resolved Address: ${ipv4[0]}`);
             console.log(`- Status: SUCCESS`);
         } catch (verifyError) {
             console.error(`[EmailService] SMTP transporter verify connection: FAILURE`);
             console.error(`- SMTP Host: ${host}`);
-            console.error(`- Resolved Address: ${resolvedAddress}`);
+            console.error(`- Resolved Address: ${ipv4[0]}`);
             console.error(`- Error: ${verifyError.message}`);
             throw verifyError;
         }
@@ -109,14 +115,14 @@ async function sendVerificationCodeEmail(email, code) {
         console.log(`✉️ Email sent successfully to ${email}. Message ID: ${info.messageId}`);
         console.log(`[EmailService] SMTP Transmission Success Status:`);
         console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${resolvedAddress}`);
+        console.log(`- Resolved Address: ${ipv4[0]}`);
         console.log(`- Success: true`);
         return { success: true, fallbackToConsole: false, error: null };
     } catch (error) {
         console.error(`❌ Error sending verification email to ${email}:`, error.message);
         console.log(`[EmailService] SMTP Transmission Failure Status:`);
         console.log(`- SMTP Host: ${host}`);
-        console.log(`- Resolved Address: ${resolvedAddress}`);
+        console.log(`- Resolved Address: ${ipv4[0]}`);
         console.log(`- Success: false`);
         console.log(`- Failure Reason: ${error.message}`);
         console.log(`[EmailService] SMTP transmission failed. Falling back to Console and File.`);
