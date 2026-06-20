@@ -9,8 +9,10 @@ const AuthGate = (() => {
     let _token = null;
     let _user = null;
     let _pendingAction = null;
-    let _verificationEmail = '';
-    let recaptchaToken = "";
+    let signupRecaptchaToken = "";
+    let loginRecaptchaToken = "";
+    let signupWidgetId = null;
+    let loginWidgetId = null;
 
     // Reserved usernames (mirrored from backend)
     const RESERVED_NAMES = ['admin','administrator','root','system','superadmin','moderator','mod','support','helpdesk','trendscope','vidvoyage','api','null','undefined','test'];
@@ -200,10 +202,16 @@ const AuthGate = (() => {
     }
 
     function resetRecaptcha() {
-        recaptchaToken = "";
-        if (typeof grecaptcha !== 'undefined' && document.getElementById('ag-recaptcha-signup')) {
+        signupRecaptchaToken = "";
+        loginRecaptchaToken = "";
+        if (typeof grecaptcha !== 'undefined') {
             try {
-                grecaptcha.reset();
+                if (signupWidgetId !== null && document.getElementById('ag-recaptcha-signup')) {
+                    grecaptcha.reset(signupWidgetId);
+                }
+                if (loginWidgetId !== null && document.getElementById('ag-recaptcha-login')) {
+                    grecaptcha.reset(loginWidgetId);
+                }
             } catch (e) {
                 // ignore
             }
@@ -334,6 +342,17 @@ const AuthGate = (() => {
     async function handleLogin(e) {
         e.preventDefault();
         clearFormErrors();
+
+        const showError = (msg) => {
+            const el = document.getElementById('ag-login-error');
+            if (el) { el.textContent = msg; el.style.display = 'block'; }
+        };
+
+        if (!loginRecaptchaToken) {
+            showError("Please complete CAPTCHA verification.");
+            return;
+        }
+
         const email = document.getElementById('ag-login-email').value.trim();
         const password = document.getElementById('ag-login-password').value;
         const remember = document.getElementById('ag-remember-me')?.checked || false;
@@ -347,7 +366,7 @@ const AuthGate = (() => {
             const res = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ email, password, rememberMe: remember })
+                body: JSON.stringify({ email, password, rememberMe: remember, recaptchaToken: loginRecaptchaToken })
             });
             const data = await res.json();
             if (res.ok && data.token) {
@@ -363,11 +382,17 @@ const AuthGate = (() => {
                 switchTab('verify');
                 document.getElementById('ag-verify-email-display').textContent = _verificationEmail;
                 showError('ag-verify', data.error || 'Verification required.');
+                grecaptcha.reset(loginWidgetId);
+                loginRecaptchaToken = "";
             } else {
                 showError('ag-login', data.error || 'Login failed');
+                grecaptcha.reset(loginWidgetId);
+                loginRecaptchaToken = "";
             }
         } catch (err) {
             showError('ag-login', 'Connection error. Please try again.');
+            grecaptcha.reset(loginWidgetId);
+            loginRecaptchaToken = "";
         } finally {
             btn.textContent = 'Secure Sign In'; btn.disabled = false;
         }
@@ -376,7 +401,7 @@ const AuthGate = (() => {
     // ─── Signup Handler ─────────────────────────────────────
     async function handleSignup(e) {
         e.preventDefault();
-        console.log("reCAPTCHA token:", recaptchaToken);
+        console.log("reCAPTCHA token:", signupRecaptchaToken);
         clearFormErrors();
 
         const showError = (msg) => {
@@ -386,7 +411,7 @@ const AuthGate = (() => {
             if (errSpan) { errSpan.textContent = msg; errSpan.classList.add('active'); }
         };
 
-        if (!recaptchaToken) {
+        if (!signupRecaptchaToken) {
             showError("Please complete CAPTCHA verification.");
             return;
         }
@@ -467,7 +492,7 @@ const AuthGate = (() => {
             const res = await fetch(`${API_BASE}/api/signup`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ full_name, email, password, confirm_password: confirm, country, gender, recaptchaToken })
+                body: JSON.stringify({ full_name, email, password, confirm_password: confirm, country, gender, recaptchaToken: signupRecaptchaToken })
             });
             const data = await res.json();
             if (res.ok && data.verification_required) {
@@ -691,10 +716,17 @@ const AuthGate = (() => {
             if (typeof grecaptcha !== 'undefined') {
                 const renderRecaptcha = () => {
                     try {
-                        grecaptcha.render("ag-recaptcha-signup", {
+                        signupWidgetId = grecaptcha.render("ag-recaptcha-signup", {
                             sitekey: siteKey,
-                            callback: function(token) {
-                                recaptchaToken = token;
+                            callback(token) {
+                                signupRecaptchaToken = token;
+                            }
+                        });
+
+                        loginWidgetId = grecaptcha.render("ag-recaptcha-login", {
+                            sitekey: siteKey,
+                            callback(token) {
+                                loginRecaptchaToken = token;
                             }
                         });
                         console.log("reCAPTCHA rendered successfully");

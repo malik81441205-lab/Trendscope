@@ -8,7 +8,7 @@ const { loginLimiter, signupLimiter, adminLoginLimiter } = require("../middlewar
 
 // reCAPTCHA + rate-limited auth routes
 router.post("/signup", signupLimiter, requireRecaptcha, asyncHandler(authController.signup));
-router.post("/login", loginLimiter, asyncHandler(authController.login));
+router.post("/login", loginLimiter, requireRecaptcha, asyncHandler(authController.login));
 router.post("/verify-email", asyncHandler(authController.verifyEmail));
 router.post("/resend-code", asyncHandler(authController.resendCode));
 router.post("/google-login", loginLimiter, asyncHandler(authController.googleLogin));
