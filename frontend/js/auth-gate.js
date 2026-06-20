@@ -10,10 +10,7 @@ const AuthGate = (() => {
     let _user = null;
     let _pendingAction = null;
     let _verificationEmail = '';
-    let _recaptchaSiteKey = '';
-    let _recaptchaLoginWidgetId = null;
-    let _recaptchaSignupWidgetId = null;
-    let _recaptchaReady = false;
+    let recaptchaToken = "";
 
     // Reserved usernames (mirrored from backend)
     const RESERVED_NAMES = ['admin','administrator','root','system','superadmin','moderator','mod','support','helpdesk','trendscope','vidvoyage','api','null','undefined','test'];
@@ -165,8 +162,8 @@ const AuthGate = (() => {
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
         switchTab('login');
-        // Reset reCAPTCHA widgets when modal opens
-        resetRecaptchaWidgets();
+        // Reset reCAPTCHA when modal opens
+        resetRecaptcha();
     }
 
     function hideModal() {
@@ -185,6 +182,7 @@ const AuthGate = (() => {
         if (btn) btn.classList.add('active');
         if (panel) panel.classList.add('active');
         clearFormErrors();
+        resetRecaptcha();
     }
 
     // ─── Google reCAPTCHA v2 ────────────────────────────────
@@ -192,56 +190,24 @@ const AuthGate = (() => {
         try {
             const res = await fetch(`${API_BASE}/api/recaptcha-key`);
             const data = await res.json();
-            _recaptchaSiteKey = data.siteKey || '';
+            const siteKey = data.siteKey || '';
+            console.log("reCAPTCHA site key loaded:", siteKey);
+            return siteKey;
         } catch (e) {
             console.warn('Could not load reCAPTCHA site key');
-            _recaptchaSiteKey = '';
+            return '';
         }
     }
 
-    function renderRecaptchaWidgets() {
-        if (!_recaptchaSiteKey || !window.grecaptcha || !window.grecaptcha.render) return;
-        if (_recaptchaReady) return;
-
-        const loginContainer = document.getElementById('ag-recaptcha-login');
-        const signupContainer = document.getElementById('ag-recaptcha-signup');
-
-        if (loginContainer && loginContainer.childElementCount === 0) {
+    function resetRecaptcha() {
+        recaptchaToken = "";
+        if (typeof grecaptcha !== 'undefined' && document.getElementById('ag-recaptcha-signup')) {
             try {
-                _recaptchaLoginWidgetId = grecaptcha.render('ag-recaptcha-login', {
-                    sitekey: _recaptchaSiteKey,
-                    theme: 'dark',
-                    size: 'normal',
-                    callback: () => clearFormErrors()
-                });
-            } catch(e) { /* already rendered */ }
+                grecaptcha.reset();
+            } catch (e) {
+                // ignore
+            }
         }
-
-        if (signupContainer && signupContainer.childElementCount === 0) {
-            try {
-                _recaptchaSignupWidgetId = grecaptcha.render('ag-recaptcha-signup', {
-                    sitekey: _recaptchaSiteKey,
-                    theme: 'dark',
-                    size: 'normal',
-                    callback: () => clearFormErrors()
-                });
-            } catch(e) { /* already rendered */ }
-        }
-
-        _recaptchaReady = true;
-    }
-
-    function resetRecaptchaWidgets() {
-        if (!window.grecaptcha) return;
-        try {
-            if (_recaptchaLoginWidgetId !== null) grecaptcha.reset(_recaptchaLoginWidgetId);
-            if (_recaptchaSignupWidgetId !== null) grecaptcha.reset(_recaptchaSignupWidgetId);
-        } catch(e) { /* widget not yet rendered */ }
-    }
-
-    function getRecaptchaToken(widgetId) {
-        if (!window.grecaptcha || widgetId === null) return '';
-        try { return grecaptcha.getResponse(widgetId); } catch(e) { return ''; }
     }
 
     // ─── Password Strength ──────────────────────────────────
@@ -374,13 +340,6 @@ const AuthGate = (() => {
 
         if (!email || !password) { showError('ag-login', 'Please fill in all fields.'); return; }
 
-        // Get reCAPTCHA token
-        const recaptchaToken = getRecaptchaToken(_recaptchaLoginWidgetId);
-        if (_recaptchaSiteKey && !recaptchaToken) {
-            showError('ag-login', 'Please complete the CAPTCHA verification.');
-            return;
-        }
-
         const btn = document.getElementById('ag-login-btn');
         btn.textContent = 'Authenticating...'; btn.disabled = true;
 
@@ -388,7 +347,7 @@ const AuthGate = (() => {
             const res = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ email, password, rememberMe: remember, recaptchaToken })
+                body: JSON.stringify({ email, password, rememberMe: remember })
             });
             const data = await res.json();
             if (res.ok && data.token) {
@@ -404,10 +363,8 @@ const AuthGate = (() => {
                 switchTab('verify');
                 document.getElementById('ag-verify-email-display').textContent = _verificationEmail;
                 showError('ag-verify', data.error || 'Verification required.');
-                resetRecaptchaWidgets();
             } else {
                 showError('ag-login', data.error || 'Login failed');
-                resetRecaptchaWidgets();
             }
         } catch (err) {
             showError('ag-login', 'Connection error. Please try again.');
@@ -419,7 +376,21 @@ const AuthGate = (() => {
     // ─── Signup Handler ─────────────────────────────────────
     async function handleSignup(e) {
         e.preventDefault();
+        console.log("reCAPTCHA token:", recaptchaToken);
         clearFormErrors();
+
+        const showError = (msg) => {
+            const el = document.getElementById('ag-signup-error');
+            if (el) { el.textContent = msg; el.style.display = 'block'; }
+            const errSpan = document.getElementById('ag-err-recaptcha');
+            if (errSpan) { errSpan.textContent = msg; errSpan.classList.add('active'); }
+        };
+
+        if (!recaptchaToken) {
+            showError("Please complete CAPTCHA verification.");
+            return;
+        }
+
         const full_name = document.getElementById('ag-signup-name').value.trim();
         const email = document.getElementById('ag-signup-email').value.trim();
         const password = document.getElementById('ag-signup-password').value;
@@ -479,12 +450,7 @@ const AuthGate = (() => {
             hasErrors = true;
         }
 
-        // reCAPTCHA Validation
-        const recaptchaToken = getRecaptchaToken(_recaptchaSignupWidgetId);
-        if (_recaptchaSiteKey && !recaptchaToken) {
-            showFieldError('ag-recaptcha-signup', 'Please complete the CAPTCHA verification.');
-            hasErrors = true;
-        }
+
 
         if (hasErrors) {
             focusAndScrollToFirstInvalid();
@@ -518,7 +484,7 @@ const AuthGate = (() => {
                 if (_pendingAction) { const fn = _pendingAction; _pendingAction = null; setTimeout(fn, 300); }
             } else {
                 handleSignupError(data.error || 'Signup failed');
-                resetRecaptchaWidgets();
+                resetRecaptcha();
             }
         } catch (err) {
             showError('ag-signup', 'Connection error. Please try again.');
@@ -532,17 +498,11 @@ const AuthGate = (() => {
         const email = document.getElementById('ag-login-email').value.trim();
         if (!email) { showError('ag-login', 'Enter your email above, then click Forgot Password.'); return; }
 
-        const recaptchaToken = getRecaptchaToken(_recaptchaLoginWidgetId);
-        if (_recaptchaSiteKey && !recaptchaToken) {
-            showError('ag-login', 'Please complete the CAPTCHA before requesting a reset.');
-            return;
-        }
-
         try {
             const res = await fetch(`${API_BASE}/api/forgot-password`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ email, recaptchaToken })
+                body: JSON.stringify({ email })
             });
             const data = await res.json();
             if (res.ok) {
@@ -550,7 +510,6 @@ const AuthGate = (() => {
             } else {
                 showError('ag-login', data.error || 'Request failed.');
             }
-            resetRecaptchaWidgets();
         } catch (e) {
             showError('ag-login', 'Connection error.');
         }
@@ -634,7 +593,7 @@ const AuthGate = (() => {
     // ─── Init ───────────────────────────────────────────────
     async function init() {
         // Load reCAPTCHA site key from backend
-        await loadRecaptchaSiteKey();
+        const siteKey = await loadRecaptchaSiteKey();
 
         // Tab switching
         document.querySelectorAll('.ag-tab-btn').forEach(btn => {
@@ -689,8 +648,8 @@ const AuthGate = (() => {
         });
 
         // Load reCAPTCHA script if site key is available
-        if (_recaptchaSiteKey) {
-            loadRecaptchaScript();
+        if (siteKey) {
+            loadRecaptchaScript(siteKey);
         }
     }
 
@@ -721,13 +680,35 @@ const AuthGate = (() => {
         }
     }
 
-    function loadRecaptchaScript() {
+    function loadRecaptchaScript(siteKey) {
         if (document.getElementById('recaptcha-script')) return;
         const script = document.createElement('script');
         script.id = 'recaptcha-script';
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
+        script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
         script.async = true;
         script.defer = true;
+        script.onload = () => {
+            if (typeof grecaptcha !== 'undefined') {
+                const renderRecaptcha = () => {
+                    try {
+                        grecaptcha.render("ag-recaptcha-signup", {
+                            sitekey: siteKey,
+                            callback: function(token) {
+                                recaptchaToken = token;
+                            }
+                        });
+                        console.log("reCAPTCHA rendered successfully");
+                    } catch (err) {
+                        console.error("Error rendering reCAPTCHA:", err);
+                    }
+                };
+                if (typeof grecaptcha.ready === 'function') {
+                    grecaptcha.ready(renderRecaptcha);
+                } else {
+                    renderRecaptcha();
+                }
+            }
+        };
         document.head.appendChild(script);
     }
 
@@ -735,14 +716,9 @@ const AuthGate = (() => {
     return {
         init, verifySession, requireAuth, isAuthenticated, authFetch, authHeaders,
         showModal, hideModal, switchTab, getUser, logout, getToken,
-        renderRecaptchaWidgets, handleGoogleLogin
+        handleGoogleLogin
     };
 })();
-
-// Global callback for reCAPTCHA script load
-function onRecaptchaLoaded() {
-    AuthGate.renderRecaptchaWidgets();
-}
 
 // Global callback for Google Sign-In
 function handleGoogleLoginResponse(response) {
