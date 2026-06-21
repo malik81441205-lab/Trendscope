@@ -145,7 +145,7 @@ const authController = {
         if (existing.length > 0) {
             const existingUser = existing[0];
             if (existingUser.is_verified) {
-                return res.status(409).json({ error: "An account with this email already exists." });
+                return res.status(409).json({ error: "An account with this email already exists. Please sign in instead." });
             }
             
             // Allow update of registration details for unverified accounts

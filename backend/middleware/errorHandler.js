@@ -51,10 +51,10 @@ function validateRequired(body, fields) {
 function errorMiddleware(err, req, res, _next) {
     console.error(`❌ [${req.method}] ${req.path}:`, err.message || err);
 
-    // MySQL duplicate entry
+    // MySQL duplicate entry (e.g. duplicate email on INSERT)
     if (err.code === "ER_DUP_ENTRY") {
         return res.status(409).json({
-            error: "Duplicate entry — this record already exists.",
+            error: "An account with this email already exists. Please sign in instead.",
             code: 409
         });
     }
