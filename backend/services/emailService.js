@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const { BrevoClient } = require("@getbrevo/brevo");
 require("dotenv").config();
 
 /**
@@ -8,15 +8,13 @@ require("dotenv").config();
 async function sendVerificationCodeEmail(email, code) {
     console.log(`[EmailService] Attempting to send verification code to ${email}...`);
 
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const brevoApiKey = process.env.BREVO_API_KEY;
     const emailFrom = process.env.EMAIL_FROM;
+    const emailFromName = process.env.EMAIL_FROM_NAME || "TrendScope";
 
-    console.log(`[EmailService] SMTP Configuration check - SMTP_HOST: ${smtpHost ? "Configured" : "Missing"}, SMTP_USER: ${smtpUser ? "Configured" : "Missing"}, SMTP_PASS: ${smtpPass ? "Configured" : "Missing"}, EMAIL_FROM: ${emailFrom ? "Configured" : "Missing"}`);
+    console.log(`[EmailService] Brevo API Configuration check - BREVO_API_KEY: ${brevoApiKey && brevoApiKey !== "<api-key>" ? "Configured" : "Missing"}, EMAIL_FROM: ${emailFrom ? "Configured" : "Missing"}, EMAIL_FROM_NAME: ${emailFromName ? "Configured" : "Missing"}`);
 
-    const isMissingConfig = !smtpHost || !smtpUser || !smtpPass || !emailFrom;
+    const isMissingConfig = !brevoApiKey || brevoApiKey === "<api-key>" || !emailFrom;
 
     const timestamp = new Date().toISOString();
     
@@ -44,80 +42,54 @@ async function sendVerificationCodeEmail(email, code) {
     };
 
     if (isMissingConfig) {
-        console.log(`[EmailService] SMTP credentials are not configured. Falling back to Console and File.`);
+        console.log(`[EmailService] Brevo API credentials are not configured. Falling back to Console and File.`);
         fallbackToConsoleAndFile(false);
         return { success: true, fallbackToConsole: true, error: null };
     }
 
     try {
-        console.log(`[EmailService] Initializing Brevo SMTP transporter...`);
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT || 587),
-            secure: false,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
-        });
+        console.log(`[EmailService] Initializing Brevo Transactional Email client...`);
+        const brevo = new BrevoClient({ apiKey: brevoApiKey });
 
-        console.log("[EmailService] Attempting direct SMTP send without verify");
-        /*
-        console.log(`[EmailService] Verifying SMTP transport connection...`);
-        try {
-            await transporter.verify();
-            console.log(`[EmailService] SMTP transporter verify connection: SUCCESS`);
-            console.log(`- SMTP Host: ${smtpHost}`);
-            console.log(`- SMTP Port: ${smtpPort}`);
-            console.log(`- Status: SUCCESS`);
-        } catch (verifyError) {
-            console.error(`[EmailService] SMTP transporter verify connection: FAILURE`);
-            console.error(`- SMTP Host: ${smtpHost}`);
-            console.error(`- SMTP Port: ${smtpPort}`);
-            console.error(`- Error: ${verifyError.message}`);
-            throw verifyError;
-        }
-        */
-
-        const mailOptions = {
-            from: `"TrendScope" <${process.env.EMAIL_FROM}>`,
-            to: email,
-            subject: `${code} is your TrendScope verification code`,
-            html: `
-                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background-color: #0b0c10; color: #c5c6c7; border: 1px solid #1f2833; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <h2 style="color: #66fcf1; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 1px;">TrendScope</h2>
-                        <p style="color: #45f3ff; margin: 5px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Premium Analytics</p>
-                    </div>
-                    <div style="background-color: #1f2833; padding: 25px; border-radius: 6px; border-left: 4px solid #66fcf1; margin-bottom: 25px;">
-                        <p style="margin-top: 0; font-size: 15px; line-height: 1.5;">Welcome to TrendScope! Please verify your email address to unlock premium analytics dashboards.</p>
-                        <p style="font-size: 14px;">Your verification code is:</p>
-                        <div style="text-align: center; margin: 25px 0;">
-                            <span style="display: inline-block; font-size: 36px; font-weight: bold; color: #66fcf1; letter-spacing: 8px; padding: 12px 24px; background-color: #0b0c10; border: 1px solid #1f2833; border-radius: 4px; font-family: monospace;">${code}</span>
-                        </div>
-                        <p style="margin-bottom: 0; font-size: 12px; color: #a1a1aa; line-height: 1.5;">This code will expire in 15 minutes. If you did not sign up for a TrendScope account, you can safely ignore this email.</p>
-                    </div>
-                    <div style="text-align: center; font-size: 11px; color: #808080; border-top: 1px solid #1f2833; padding-top: 20px;">
-                        © 2026 TrendScope. All rights reserved.
-                    </div>
+        const htmlContent = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background-color: #0b0c10; color: #c5c6c7; border: 1px solid #1f2833; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="color: #66fcf1; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 1px;">TrendScope</h2>
+                    <p style="color: #45f3ff; margin: 5px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Premium Analytics</p>
                 </div>
-            `
-        };
+                <div style="background-color: #1f2833; padding: 25px; border-radius: 6px; border-left: 4px solid #66fcf1; margin-bottom: 25px;">
+                    <p style="margin-top: 0; font-size: 15px; line-height: 1.5;">Welcome to TrendScope! Please verify your email address to unlock premium analytics dashboards.</p>
+                    <p style="font-size: 14px;">Your verification code is:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <span style="display: inline-block; font-size: 36px; font-weight: bold; color: #66fcf1; letter-spacing: 8px; padding: 12px 24px; background-color: #0b0c10; border: 1px solid #1f2833; border-radius: 4px; font-family: monospace;">${code}</span>
+                    </div>
+                    <p style="margin-bottom: 0; font-size: 12px; color: #a1a1aa; line-height: 1.5;">This code will expire in 15 minutes. If you did not sign up for a TrendScope account, you can safely ignore this email.</p>
+                </div>
+                <div style="text-align: center; font-size: 11px; color: #808080; border-top: 1px solid #1f2833; padding-top: 20px;">
+                    © 2026 TrendScope. All rights reserved.
+                </div>
+            </div>
+        `;
 
         console.log(`[EmailService] Sending email to ${email}...`);
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`✉️ Email sent successfully to ${email}. Message ID: ${info.messageId}`);
-        console.log(`[EmailService] SMTP Transmission Success Status:`);
-        console.log(`- SMTP Host: ${smtpHost}`);
+        const result = await brevo.transactionalEmails.sendTransacEmail({
+            subject: `${code} is your TrendScope verification code`,
+            htmlContent: htmlContent,
+            sender: { name: emailFromName, email: emailFrom },
+            to: [{ email: email }]
+        });
+
+        const messageId = result.messageId || (result.body && result.body.messageId) || JSON.stringify(result);
+        console.log(`✉️ Email sent successfully to ${email}. Message ID: ${messageId}`);
+        console.log(`[EmailService] Brevo API Transmission Success Status:`);
         console.log(`- Success: true`);
         return { success: true, fallbackToConsole: false, error: null };
     } catch (error) {
         console.error(`❌ Error sending verification email to ${email}:`, error.message);
-        console.log(`[EmailService] SMTP Transmission Failure Status:`);
-        console.log(`- SMTP Host: ${smtpHost}`);
+        console.log(`[EmailService] Brevo API Transmission Failure Status:`);
         console.log(`- Success: false`);
         console.log(`- Failure Reason: ${error.message}`);
-        console.log(`[EmailService] SMTP transmission failed. Falling back to Console and File.`);
+        console.log(`[EmailService] Brevo API transmission failed. Falling back to Console and File.`);
         fallbackToConsoleAndFile(true);
         return { success: false, fallbackToConsole: true, error: error.message };
     }
