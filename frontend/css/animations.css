@@ -1,0 +1,489 @@
+/* ═══════════════════════════════════════════════════════════════
+   IMPRESSIVE ANIMATIONS — TrendScope
+   Scroll-reveal, hover effects, entrance animations, and more
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── SCROLL REVEAL BASE ─── */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.reveal.delay-1 { transition-delay: 0.1s; }
+.reveal.delay-2 { transition-delay: 0.2s; }
+.reveal.delay-3 { transition-delay: 0.3s; }
+.reveal.delay-4 { transition-delay: 0.4s; }
+.reveal.delay-5 { transition-delay: 0.5s; }
+
+/* ─── SCALE REVEAL ─── */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ─── SLIDE FROM LEFT ─── */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ─── SLIDE FROM RIGHT ─── */
+.reveal-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ─── FLIP IN ─── */
+.reveal-flip {
+    opacity: 0;
+    transform: perspective(800px) rotateY(-15deg);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-flip.visible {
+    opacity: 1;
+    transform: perspective(800px) rotateY(0);
+}
+
+/* ═══ ENHANCED VIDEO CARD HOVER ═══ */
+.video-card {
+    position: relative;
+}
+.video-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, transparent 40%, rgba(74, 222, 128, 0.3), transparent 60%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+.video-card:hover::before {
+    opacity: 1;
+}
+
+/* ─── VIDEO CARD GLOW ON HOVER ─── */
+.video-card::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 40px;
+    background: radial-gradient(ellipse, rgba(74, 222, 128, 0.15), transparent);
+    filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+.video-card:hover::after {
+    opacity: 1;
+}
+
+/* ─── VIDEO CARD SHIMMER ON HOVER ─── */
+.video-card .video-thumbnail-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+.video-card:hover .video-thumbnail-wrap::after {
+    left: 150%;
+}
+
+/* ═══ STAT CARD ANIMATIONS ═══ */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(74, 222, 128, 0.05), transparent 30%);
+    animation: statRotate 8s linear infinite;
+    pointer-events: none;
+}
+@keyframes statRotate {
+    to { transform: rotate(360deg); }
+}
+.stat-card:hover {
+    border-color: rgba(74, 222, 128, 0.3);
+}
+.stat-card:hover .stat-icon-wrap {
+    transform: scale(1.1) rotate(-5deg);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stat-card:hover .stat-value {
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ═══ GRADIENT TEXT ANIMATION ═══ */
+.gradient-text {
+    background: linear-gradient(135deg, var(--green), var(--blue), var(--green));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease infinite;
+}
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ═══ MAGNETIC BUTTON EFFECT ═══ */
+.magnetic-btn {
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.magnetic-btn:hover {
+    transform: scale(1.02);
+}
+.magnetic-btn:active {
+    transform: scale(0.97);
+}
+
+/* ─── BUTTON RIPPLE EFFECT ─── */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+.btn-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(74, 222, 128, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+}
+.btn-ripple:active::after {
+    width: 300px;
+    height: 300px;
+    opacity: 1;
+    transition: 0s;
+}
+
+/* ═══ PANEL CARD HOVER GLOW ═══ */
+.panel-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.panel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(74, 222, 128, 0.1);
+}
+
+/* ═══ COUNTRY BUTTON ANIMATIONS ═══ */
+.country-btn {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.country-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.country-btn.active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.25);
+}
+
+/* ═══ CATEGORY CHIP ANIMATIONS ═══ */
+.cat-btn {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cat-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+}
+.cat-btn.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══ COMPARISON CARD ANIMATIONS ═══ */
+.comparison-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.comparison-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+.comparison-card:hover .comp-icon {
+    transform: scale(1.15) rotate(-5deg);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.comparison-card:hover .comp-value {
+    transform: scale(1.05);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══ ACTIVITY FEED ANIMATIONS ═══ */
+.activity-item {
+    transition: all 0.3s ease;
+}
+.activity-item:hover {
+    transform: translateX(4px);
+    background: var(--bg3);
+    border-radius: 8px;
+    padding-left: 8px;
+}
+
+/* ═══ CHANNEL ITEM ANIMATIONS ═══ */
+.channel-item {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.channel-item:hover {
+    transform: translateX(6px);
+    background: var(--border);
+}
+.channel-item:hover .ch-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+}
+
+/* ═══ KEYWORD ITEM ANIMATIONS ═══ */
+.kw-item {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kw-item:hover {
+    transform: translateX(4px);
+    background: var(--border);
+}
+
+/* ═══ SIDEBAR NAV ITEM ANIMATIONS ═══ */
+.nav-item {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-item:active {
+    transform: scale(0.97);
+}
+.nav-item.active {
+    animation: navPulse 2s ease infinite;
+}
+@keyframes navPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.2); }
+    50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+}
+
+/* ═══ LIVE BADGE PULSE ═══ */
+.live-badge {
+    animation: livePulse 2s ease infinite;
+}
+@keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+}
+
+/* ═══ FAB ANIMATION ENHANCEMENT ═══ */
+.fab-bottom {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.fab-bottom:hover {
+    transform: translateY(-8px) scale(1.1) rotate(-10deg);
+    box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
+}
+
+/* ═══ SEARCH BAR FOCUS ANIMATION ═══ */
+.search-bar-container {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.search-bar-container:focus-within {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px var(--green2), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ═══ TESTIMONIAL CARD ANIMATIONS ═══ */
+.testimonial-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.testimonial-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══ ABOUT CARD ANIMATIONS ═══ */
+.about-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.about-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(74, 222, 128, 0.2);
+}
+.about-card:hover .about-icon {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+}
+
+/* ═══ SAVED TREND CARD ANIMATIONS ═══ */
+.saved-trend-card {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.saved-trend-card:hover {
+    transform: translateX(4px);
+    border-color: var(--green);
+}
+.saved-trend-card:hover .saved-trend-thumb {
+    transform: scale(1.05);
+}
+
+/* ═══ TIME BUTTON ANIMATIONS ═══ */
+.time-btn {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.time-btn:hover {
+    transform: translateY(-2px);
+}
+.time-btn.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+}
+
+/* ═══ CHART PANEL ANIMATIONS ═══ */
+.chart-panel {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.chart-panel:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══ ICON BUTTON ANIMATIONS ═══ */
+.icon-btn {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.icon-btn:hover {
+    transform: scale(1.08) rotate(-5deg);
+    background: var(--bg3);
+}
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* ═══ USER PROFILE HOVER ═══ */
+.user-profile {
+    transition: all 0.3s ease;
+}
+.user-profile:hover {
+    transform: scale(1.02);
+}
+.user-profile:hover img {
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.3);
+}
+
+/* ═══ PAGE LOAD STAGGER ANIMATION ═══ */
+@keyframes staggerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-widgets-grid > * {
+    animation: staggerFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.hero-widgets-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.hero-widgets-grid > *:nth-child(2) { animation-delay: 0.2s; }
+
+.content-grid > * {
+    animation: staggerFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.content-grid > *:nth-child(1) { animation-delay: 0.15s; }
+.content-grid > *:nth-child(2) { animation-delay: 0.25s; }
+
+/* ═══ SMOOTH SECTION TRANSITIONS ═══ */
+section {
+    transition: opacity 0.3s ease;
+}
+
+/* ═══ CURSOR TRAIL EFFECT (subtle) ═══ */
+.cursor-glow {
+    position: fixed;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+.cursor-glow.active {
+    opacity: 1;
+}
+
+/* ═══ NUMBER COUNTER ANIMATION ═══ */
+@keyframes countUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.stat-value, .comp-value {
+    animation: countUp 0.5s ease both;
+}
+
+/* ═══ GLOW KEYFRAMES ═══ */
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+}
+
+/* ═══ REDUCED MOTION ═══ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-flip {
+        opacity: 1;
+        transform: none;
+    }
+}
