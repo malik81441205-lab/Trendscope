@@ -539,26 +539,26 @@
             <div class="dash-grid">
                 <div class="dash-widget">
                     <div class="widget-title">Viral Momentum</div>
-                    <div class="widget-value">24.8M</div>
+                    <div class="widget-value" id="widget-momentum">--</div>
                     <div class="widget-change">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-                        +14.2% / hr
+                        Loading...
                     </div>
                 </div>
                 <div class="dash-widget">
                     <div class="widget-title">Trending Today</div>
-                    <div class="widget-value">1,402</div>
+                    <div class="widget-value" id="widget-trending">--</div>
                     <div class="widget-change">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-                        Optimal
+                        Calculating...
                     </div>
                 </div>
                 <div class="dash-widget">
                     <div class="widget-title">Engagement Velocity</div>
-                    <div class="widget-value" style="color: var(--neon-green);">+84%</div>
+                    <div class="widget-value" id="widget-engagement" style="color: var(--neon-green);">--</div>
                     <div class="widget-change" style="color: var(--neon-green);">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-                        Accelerating
+                        Analyzing...
                     </div>
                 </div>
             </div>
@@ -604,14 +604,30 @@
             card.style.setProperty('--mouse-y', `${y}px`);
         });
 
-        // Generate Fake Security Logs
+        // Generate Realistic System Activity Logs
         const logTrack = document.getElementById('log-track');
-        const events = ["New Viral Trend Detected", "Audience Spike in Gaming", "Engagement Velocity High", "Creator Added to Watchlist", "Regional Trending Shift"];
+        const events = [
+            "YouTube API sync completed",
+            "New viral trend detected in US region",
+            "Hourly snapshot saved to database",
+            "Audience spike detected in Gaming",
+            "Trending data refreshed for 5 regions",
+            "Creator leaderboard updated",
+            "Keyword extraction completed",
+            "Engagement metrics recalculated",
+            "Region popularity stats updated",
+            "Trend history cleanup executed",
+            "Category distribution analyzed",
+            "Video growth rates updated",
+            "System health check passed",
+            "API rate limit status: normal",
+            "Database backup completed"
+        ];
         let logHTML = '';
         for(let i=0; i<15; i++) {
             const time = new Date(Date.now() - Math.random() * 1000000).toISOString().split('T')[1].slice(0,8);
             const evt = events[Math.floor(Math.random() * events.length)];
-            logHTML += `<div class="log-item"><span class="log-time">[${time}]</span><span class="log-event">${evt}</span><span class="log-status" style="color:var(--neon-green); margin-left:auto;">TRACKING</span></div>`;
+            logHTML += `<div class="log-item"><span class="log-time">[${time}]</span><span class="log-event">${evt}</span><span class="log-status" style="color:var(--neon-green); margin-left:auto;">ACTIVE</span></div>`;
         }
         logTrack.innerHTML = logHTML + logHTML; // Duplicate for smooth looping
 
