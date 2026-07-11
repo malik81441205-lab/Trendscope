@@ -9,7 +9,7 @@
     // ─── SCROLL REVEAL ─────────────────────────────────────────
     function initScrollReveal() {
         const revealElements = document.querySelectorAll(
-            '.reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-flip'
+            '.reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-flip, .reveal-blur, .reveal-bounce'
         );
         if (!revealElements.length) return;
 
@@ -22,7 +22,7 @@
                     }
                 });
             },
-            { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+            { threshold: 0.08, rootMargin: '0px 0px -30px 0px' }
         );
 
         revealElements.forEach((el) => observer.observe(el));
@@ -54,10 +54,11 @@
                     !el.classList.contains('reveal-left') &&
                     !el.classList.contains('reveal-right') &&
                     !el.classList.contains('reveal-flip') &&
+                    !el.classList.contains('reveal-blur') &&
+                    !el.classList.contains('reveal-bounce') &&
                     !el.classList.contains('visible')) {
                     el.classList.add(cls);
-                    // Stagger delay for grids
-                    if (i < 6) el.classList.add(`delay-${i + 1}`);
+                    if (i < 8) el.classList.add(`delay-${i + 1}`);
                 }
             });
         });
@@ -65,7 +66,7 @@
 
     // ─── CURSOR GLOW EFFECT ────────────────────────────────────
     function initCursorGlow() {
-        if (window.innerWidth < 768) return; // Skip on mobile
+        if (window.innerWidth < 768) return;
 
         const glow = document.createElement('div');
         glow.className = 'cursor-glow';
@@ -73,6 +74,7 @@
 
         let mouseX = 0, mouseY = 0;
         let glowX = 0, glowY = 0;
+        let rafId = null;
 
         document.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
@@ -85,13 +87,22 @@
         });
 
         function animateGlow() {
-            glowX += (mouseX - glowX) * 0.15;
-            glowY += (mouseY - glowY) * 0.15;
+            glowX += (mouseX - glowX) * 0.12;
+            glowY += (mouseY - glowY) * 0.12;
             glow.style.left = glowX + 'px';
             glow.style.top = glowY + 'px';
-            requestAnimationFrame(animateGlow);
+            rafId = requestAnimationFrame(animateGlow);
         }
         animateGlow();
+
+        // Cleanup on page hide
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                cancelAnimationFrame(rafId);
+            } else {
+                animateGlow();
+            }
+        });
     }
 
     // ─── SMOOTH SCROLL FOR NAV LINKS ───────────────────────────
@@ -125,7 +136,7 @@
                 const rect = card.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width - 0.5;
                 const y = (e.clientY - rect.top) / rect.height - 0.5;
-                card.style.transform = `translateY(-2px) perspective(600px) rotateX(${y * -4}deg) rotateY(${x * 4}deg)`;
+                card.style.transform = `translateY(-3px) perspective(600px) rotateX(${y * -5}deg) rotateY(${x * 5}deg)`;
             });
             card.addEventListener('mouseleave', () => {
                 card.style.transform = '';
@@ -140,19 +151,108 @@
         const grid = document.getElementById('video-grid');
         if (!grid) return;
 
+        let currentCard = null;
+
         grid.addEventListener('mousemove', (e) => {
             const card = e.target.closest('.video-card');
             if (!card) return;
+            if (currentCard !== card) {
+                if (currentCard) currentCard.style.transform = '';
+                currentCard = card;
+            }
             const rect = card.getBoundingClientRect();
             const x = (e.clientX - rect.left) / rect.width - 0.5;
             const y = (e.clientY - rect.top) / rect.height - 0.5;
-            card.style.transform = `translateY(-4px) perspective(800px) rotateX(${y * -3}deg) rotateY(${x * 3}deg)`;
+            card.style.transform = `translateY(-5px) perspective(800px) rotateX(${y * -4}deg) rotateY(${x * 4}deg)`;
         });
 
-        grid.addEventListener('mouseleave', (e) => {
-            const card = e.target.closest('.video-card');
-            if (card) card.style.transform = '';
+        grid.addEventListener('mouseleave', () => {
+            if (currentCard) {
+                currentCard.style.transform = '';
+                currentCard = null;
+            }
         }, true);
+    }
+
+    // ─── COMPARISON CARD TILT ──────────────────────────────────
+    function initComparisonTilt() {
+        if (window.innerWidth < 768) return;
+
+        document.querySelectorAll('.comparison-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `translateY(-6px) scale(1.02) perspective(600px) rotateX(${y * -3}deg) rotateY(${x * 3}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+        });
+    }
+
+    // ─── ABOUT CARD TILT ───────────────────────────────────────
+    function initAboutCardTilt() {
+        if (window.innerWidth < 768) return;
+
+        document.querySelectorAll('.about-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `translateY(-8px) perspective(600px) rotateX(${y * -3}deg) rotateY(${x * 3}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+        });
+    }
+
+    // ─── MAGNETIC BUTTON EFFECT ────────────────────────────────
+    function initMagneticButtons() {
+        if (window.innerWidth < 768) return;
+
+        document.querySelectorAll('.fab-bottom, .feedback-fab').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) scale(1.05)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = '';
+            });
+        });
+    }
+
+    // ─── STAGGER REVEAL FOR DYNAMIC CONTENT ────────────────────
+    function initStaggerReveal() {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) {
+                        // Check for video cards
+                        if (node.classList && node.classList.contains('video-card')) {
+                            node.classList.add('reveal');
+                            setTimeout(() => node.classList.add('visible'), 50);
+                        }
+                        // Check children
+                        if (node.querySelectorAll) {
+                            node.querySelectorAll('.video-card').forEach((card, i) => {
+                                card.classList.add('reveal');
+                                card.style.transitionDelay = `${i * 0.05}s`;
+                                setTimeout(() => card.classList.add('visible'), 50 + i * 50);
+                            });
+                        }
+                    }
+                });
+            });
+        });
+
+        const videoGrid = document.getElementById('video-grid');
+        if (videoGrid) {
+            observer.observe(videoGrid, { childList: true });
+        }
     }
 
     // ─── INITIALIZE ────────────────────────────────────────────
@@ -164,8 +264,12 @@
         initRippleEffect();
         initStatParallax();
         initVideoTilt();
+        initComparisonTilt();
+        initAboutCardTilt();
+        initMagneticButtons();
+        initStaggerReveal();
 
-        // Re-run auto-tag when DOM changes (e.g. after dynamic content loads)
+        // Re-run auto-tag when DOM changes
         const mutObs = new MutationObserver(() => {
             autoTagRevealElements();
             initScrollReveal();
